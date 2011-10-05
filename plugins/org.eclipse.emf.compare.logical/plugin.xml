@@ -3,6 +3,16 @@
 <plugin>
    <extension-point id="org.eclipse.emf.compare.modelResolver" name="Model Resolver" schema="schema/ModelResolver.exsd"/>
    
+     <extension point="org.eclipse.emf.compare.modelResolver">
+      <modelResolver
+            class="org.eclipse.emf.compare.logical.extension.ModelCrossReferencesResolver">
+         <contentType
+               value=
+                 "org.eclipse.emf.ecore,
+                  org.eclipse.emf.ecore.xmi"/>
+      </modelResolver>
+   </extension>
+   
    <extension
          id="org.eclipse.emf.compare.model.provider"
          name="EMF Compare"
@@ -32,4 +42,17 @@
          </and>
       </enablement>
    </extension>
+   
+   
+    <extension point="org.eclipse.emf.compare.modelResolver">
+      <modelResolver
+            class="org.eclipse.emf.compare.logical.extension.ModelCrossReferencesResolver">
+         <contentType
+               value=
+                 "org.eclipse.emf.compare.example.library.libraryContentType,
+                  org.eclipse.emf.compare.example.library.bookContentType,
+                  org.eclipse.emf.compare.example.library.writerContentType"/>
+      </modelResolver>
+   </extension>
+   
 </plugin>

@@ -11,6 +11,7 @@
 package org.eclipse.emf.compare.logical.extension;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.ecore.resource.Resource;
 
 /**
@@ -56,6 +57,8 @@ public interface IModelResolver {
 	 *            The file for which we seek the full logical model.
 	 * @param eResource
 	 *            The EMF {@link Resource} contained by the given <em>file</em>.
+	 * @param monitor
+	 *            the progress monitor to keep track of what's going on and allow the end user to undo.
 	 */
-	void resolve(IFile iFile, Resource eResource);
+	void resolve(IFile iFile, Resource eResource, IProgressMonitor monitor);
 }

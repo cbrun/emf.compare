@@ -18,6 +18,7 @@ import java.util.Set;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
@@ -45,7 +46,7 @@ public class ScopedModelResolver implements IModelResolver {
 	 * @see org.eclipse.emf.compare.logical.extension.IModelResolver#resolve(org.eclipse.core.resources.IFile,
 	 *      org.eclipse.emf.ecore.resource.Resource)
 	 */
-	public void resolve(IFile iFile, Resource eResource) {
+	public void resolve(IFile iFile, Resource eResource, IProgressMonitor monitor) {
 		// We'll load every "model" resource we find in this temporary resource set.
 		ResourceSet temporaryResourceSet = new ResourceSetImpl();
 

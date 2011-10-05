@@ -142,7 +142,7 @@ public class EMFResourceMapping extends ResourceMapping {
 	public ResourceTraversal[] getTraversals(ResourceMappingContext context, IProgressMonitor monitor)
 			throws CoreException {
 		if (!isResolved) {
-			resolveLocalResourceSet();
+			resolveLocalResourceSet(monitor);
 
 			if (context instanceof RemoteResourceMappingContext) {
 				RemoteResourceMappingContext remoteContext = (RemoteResourceMappingContext)context;
@@ -303,16 +303,17 @@ public class EMFResourceMapping extends ResourceMapping {
 	/**
 	 * This will try and resolve all logical resources that constitute this model in the local resource set.
 	 * 
+	 * @param monitor
 	 * @return The list of all logical resources that constitute this model.
 	 */
-	private void resolveLocalResourceSet() {
+	private void resolveLocalResourceSet(IProgressMonitor monitor) {
 		Iterator<ModelResolverDescriptor> modelResolverIterator = EMFCompareExtensionRegistry
 				.getRegisteredModelResolvers().iterator();
 		boolean resolved = false;
 		while (!resolved && modelResolverIterator.hasNext()) {
 			ModelResolverDescriptor descriptor = modelResolverIterator.next();
 			if (descriptor.canResolve(new ModelIdentifier(emfResource))) {
-				descriptor.getModelResolver().resolve(file, emfResource);
+				descriptor.getModelResolver().resolve(file, emfResource, monitor);
 				resolved = true;
 			}
 		}
