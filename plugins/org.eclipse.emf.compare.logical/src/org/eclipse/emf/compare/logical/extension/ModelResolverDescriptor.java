@@ -20,7 +20,7 @@ import org.eclipse.emf.compare.util.ModelIdentifier;
 /**
  * Describes a extension as contributed to the "org.eclipse.emf.compare.modelResolver" extension point.
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
 public class ModelResolverDescriptor {
 	/** Name of the attribute holding the {@link IModelResolver} qualified names. */
@@ -67,28 +67,30 @@ public class ModelResolverDescriptor {
 	/**
 	 * Creates a descriptor corresponding to the information of the given <em>element</em>.
 	 * 
-	 * @param element
+	 * @param confElement
 	 *            Configuration element from which to create this descriptor.
 	 */
-	public ModelResolverDescriptor(IConfigurationElement element) {
-		this.element = element;
-		this.extensionClassName = element.getAttribute(MODEL_RESOLVER_CLASS_ATTRIBUTE);
+	public ModelResolverDescriptor(IConfigurationElement confElement) {
+		this.element = confElement;
+		this.extensionClassName = confElement.getAttribute(MODEL_RESOLVER_CLASS_ATTRIBUTE);
 
-		IConfigurationElement[] contentTypeConfig = element.getChildren(MODEL_RESOLVER_CONTENT_TYPE_TAG);
+		final IConfigurationElement[] contentTypeConfig = confElement
+				.getChildren(MODEL_RESOLVER_CONTENT_TYPE_TAG);
 		if (contentTypeConfig.length > 0) {
 			contentType = contentTypeConfig[0].getAttribute(ENABLEMENT_TAG_VALUE);
 		} else {
 			contentType = null;
 		}
 
-		IConfigurationElement[] fileExtensionConfig = element.getChildren(MODEL_RESOLVER_FILE_EXTENSION_TAG);
+		final IConfigurationElement[] fileExtensionConfig = confElement
+				.getChildren(MODEL_RESOLVER_FILE_EXTENSION_TAG);
 		if (fileExtensionConfig.length > 0) {
 			fileExtension = fileExtensionConfig[0].getAttribute(ENABLEMENT_TAG_VALUE);
 		} else {
 			fileExtension = null;
 		}
 
-		IConfigurationElement[] namespaceConfig = element.getChildren(MODEL_RESOLVER_NAMESPACE_TAG);
+		final IConfigurationElement[] namespaceConfig = confElement.getChildren(MODEL_RESOLVER_NAMESPACE_TAG);
 		if (namespaceConfig.length > 0) {
 			namespace = namespaceConfig[0].getAttribute(ENABLEMENT_TAG_VALUE);
 		} else {
@@ -138,23 +140,23 @@ public class ModelResolverDescriptor {
 		 */
 		boolean canResolve = false;
 		if (fileExtension != null) {
-			String[] validExtensions = fileExtension.split(VALUE_SEPARATOR);
+			final String[] validExtensions = fileExtension.split(VALUE_SEPARATOR);
 			for (String validExtension : validExtensions) {
 				canResolve = identifier.getExtension().equals(validExtension.trim())
 						|| EXTENSIONS_WILDCARD.equals(validExtension.trim());
 			}
 		} else if (contentType != null) {
-			String[] validContentTypes = contentType.split(VALUE_SEPARATOR);
-			IContentTypeManager ctManager = Platform.getContentTypeManager();
+			final String[] validContentTypes = contentType.split(VALUE_SEPARATOR);
+			final IContentTypeManager ctManager = Platform.getContentTypeManager();
 			for (int i = 0; i < validContentTypes.length && !canResolve; i++) {
-				IContentType expected = ctManager.getContentType(validContentTypes[i].trim());
-				IContentType actual = ctManager.getContentType(identifier.getContentType());
+				final IContentType expected = ctManager.getContentType(validContentTypes[i].trim());
+				final IContentType actual = ctManager.getContentType(identifier.getContentType());
 				if (expected != null && actual != null) {
 					canResolve = actual.isKindOf(expected);
 				}
 			}
 		} else if (namespace != null) {
-			String[] validNamespaces = namespace.split(VALUE_SEPARATOR);
+			final String[] validNamespaces = namespace.split(VALUE_SEPARATOR);
 			for (String validNamespace : validNamespaces) {
 				canResolve = identifier.getNamespace().matches(validNamespace.trim());
 			}

@@ -47,14 +47,14 @@ import org.eclipse.team.core.mapping.ISynchronizationContext;
 /**
  * This class will serve as the root of our logical model deltas.
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
-public class EMFModelDelta extends EMFDelta {
+public final class EMFModelDelta extends AbstractEMFDelta {
 	/** Identifier of the model provider for which this delta has been created. */
-	private String modelProviderId;
+	private final String modelProviderId;
 
 	/** Synchronization context of this delta. */
-	private ISynchronizationContext context;
+	private final ISynchronizationContext context;
 
 	/** Keeps track of the local resource set for which this instance holds deltas. */
 	private ResourceSet localResourceSet;
@@ -71,15 +71,15 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * Creates the root of our model delta.
 	 * 
-	 * @param context
+	 * @param syncContext
 	 *            Synchronization context of this delta.
-	 * @param modelProviderId
+	 * @param providerId
 	 *            Identifier of the model provider for which this delta should be created.
 	 */
-	private EMFModelDelta(ISynchronizationContext context, String modelProviderId) {
+	private EMFModelDelta(ISynchronizationContext syncContext, String providerId) {
 		super(null);
-		this.modelProviderId = modelProviderId;
-		this.context = context;
+		this.modelProviderId = providerId;
+		this.context = syncContext;
 	}
 
 	/**
@@ -98,7 +98,7 @@ public class EMFModelDelta extends EMFDelta {
 	 */
 	public static EMFModelDelta createDelta(ISynchronizationContext context, String modelProviderId,
 			IProgressMonitor monitor) throws CoreException {
-		EMFModelDelta delta = new EMFModelDelta(context, modelProviderId);
+		final EMFModelDelta delta = new EMFModelDelta(context, modelProviderId);
 
 		delta.initialize(monitor);
 		context.getCache().put(EMFModelProvider.SYNCHRONIZATION_CACHE_KEY, delta);
@@ -120,7 +120,7 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#clear()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#clear()
 	 */
 	@Override
 	public void clear() {
@@ -140,7 +140,7 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getAncestor()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getAncestor()
 	 */
 	@Override
 	public Object getAncestor() {
@@ -150,7 +150,7 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getLocal()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getLocal()
 	 */
 	@Override
 	public Object getLocal() {
@@ -160,7 +160,7 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getRemote()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getRemote()
 	 */
 	@Override
 	public Object getRemote() {
@@ -170,7 +170,7 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getDiff()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getDiff()
 	 */
 	@Override
 	public IDiff getDiff() {
@@ -180,7 +180,7 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getPath()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getPath()
 	 */
 	@Override
 	public IPath getPath() {
@@ -199,16 +199,16 @@ public class EMFModelDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#createChildren()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#createChildren()
 	 */
 	@Override
 	protected void createChildren() {
-		IDiffTree diffTree = context.getDiffTree();
+		final IDiffTree diffTree = context.getDiffTree();
 
 		if (comparisonSnapshot instanceof ComparisonResourceSetSnapshot) {
-			ComparisonResourceSetSnapshot resourceSetSnapshot = (ComparisonResourceSetSnapshot)comparisonSnapshot;
+			final ComparisonResourceSetSnapshot resourceSetSnapshot = (ComparisonResourceSetSnapshot)comparisonSnapshot;
 
-			for (DiffModel diffModel : resourceSetSnapshot.getDiffResourceSet().getDiffModels()) {
+			for (final DiffModel diffModel : resourceSetSnapshot.getDiffResourceSet().getDiffModels()) {
 				// Are there any differences in this model?
 				if (diffModel.getSubchanges() <= 0) {
 					continue;
@@ -218,25 +218,25 @@ public class EMFModelDelta extends EMFDelta {
 				Resource local = null;
 				Resource remote = null;
 				Resource ancestor = null;
-				Iterator<EObject> leftRootsIterator = diffModel.getLeftRoots().iterator();
+				final Iterator<EObject> leftRootsIterator = diffModel.getLeftRoots().iterator();
 				while (local == null && leftRootsIterator.hasNext()) {
-					EObject leftRoot = leftRootsIterator.next();
+					final EObject leftRoot = leftRootsIterator.next();
 					local = leftRoot.eResource();
 				}
-				Iterator<EObject> rightRootsIterator = diffModel.getRightRoots().iterator();
+				final Iterator<EObject> rightRootsIterator = diffModel.getRightRoots().iterator();
 				while (remote == null && rightRootsIterator.hasNext()) {
-					EObject rightRoot = rightRootsIterator.next();
+					final EObject rightRoot = rightRootsIterator.next();
 					remote = rightRoot.eResource();
 				}
-				Iterator<EObject> ancestorRootsIterator = diffModel.getAncestorRoots().iterator();
+				final Iterator<EObject> ancestorRootsIterator = diffModel.getAncestorRoots().iterator();
 				while (ancestor == null && ancestorRootsIterator.hasNext()) {
-					EObject ancestorRoot = ancestorRootsIterator.next();
+					final EObject ancestorRoot = ancestorRootsIterator.next();
 					ancestor = ancestorRoot.eResource();
 				}
 
-				IResource localResource = EclipseModelUtils.findIResource(local);
+				final IResource localResource = EclipseModelUtils.findIResource(local);
 				if (localResource != null) {
-					IDiff diff = diffTree.getDiff(localResource.getFullPath());
+					final IDiff diff = diffTree.getDiff(localResource.getFullPath());
 					new EMFResourceDelta(this, diffModel, diff, local, remote, ancestor);
 				}
 			}
@@ -263,12 +263,12 @@ public class EMFModelDelta extends EMFDelta {
 			mappings = context.getScope().getMappings();
 		}
 
-		for (ResourceMapping mapping : mappings) {
+		for (final ResourceMapping mapping : mappings) {
 			if (modelProviderId.equals(mapping.getModelProviderId()) && mapping instanceof EMFResourceMapping) {
-				EMFResourceMapping emfMapping = (EMFResourceMapping)mapping;
-				ResourceSet local = emfMapping.getLocalResourceSet();
-				ResourceSet remote = emfMapping.getRemoteResourceSet();
-				ResourceSet ancestor = emfMapping.getAncestorResourceSet();
+				final EMFResourceMapping emfMapping = (EMFResourceMapping)mapping;
+				final ResourceSet local = emfMapping.getLocalResourceSet();
+				final ResourceSet remote = emfMapping.getRemoteResourceSet();
+				final ResourceSet ancestor = emfMapping.getAncestorResourceSet();
 				// If any one of these is null, continue on to the next mapping
 				if (local == null || remote == null || ancestor == null) {
 					// Continue
@@ -289,7 +289,7 @@ public class EMFModelDelta extends EMFDelta {
 			// Seek an EMFResourceMapping
 			EMFResourceMapping emfMapping = null;
 			for (int i = 0; i < mappings.length && emfMapping == null; i++) {
-				ResourceMapping mapping = mappings[i];
+				final ResourceMapping mapping = mappings[i];
 				if (modelProviderId.equals(mapping.getModelProviderId())
 						&& mapping instanceof EMFResourceMapping) {
 					emfMapping = (EMFResourceMapping)mapping;
@@ -333,13 +333,26 @@ public class EMFModelDelta extends EMFDelta {
 			// FIXME throw something at user's face
 		}
 
-		ComparisonSnapshot comparisonResult = doResourceSetCompare(local, remote, ancestor, monitor);
+		final ComparisonSnapshot comparisonResult = doResourceSetCompare(local, remote, ancestor, monitor);
 
 		comparisonResult.setDate(Calendar.getInstance().getTime());
 
 		return comparisonResult;
 	}
 
+	/**
+	 * Launch the comparison of two resourcesets.
+	 * 
+	 * @param local
+	 *            the local version of resources
+	 * @param remote
+	 *            the remote version of resources.
+	 * @param ancestor
+	 *            the common ancestor.
+	 * @param monitor
+	 *            a monitor to track progress.
+	 * @return the result of the comparison.
+	 */
 	private ComparisonSnapshot doResourceSetCompare(ResourceSet local, ResourceSet remote,
 			ResourceSet ancestor, IProgressMonitor monitor) {
 		final ComparisonResourceSetSnapshot snapshot = DiffFactory.eINSTANCE

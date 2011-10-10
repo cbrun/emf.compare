@@ -37,7 +37,7 @@ import org.eclipse.team.core.history.IFileRevision;
  * This {@link URIConverter} will be used in order to fetch remote contents instead of local contents when
  * loading resources.
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
 public class RevisionedURIConverter extends DelegatingURIConverter {
 	/** The revision of the base resource. This revision's timestamp will be used to resolve proxies. */

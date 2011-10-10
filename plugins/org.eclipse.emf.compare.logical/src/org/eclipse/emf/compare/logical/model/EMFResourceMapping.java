@@ -48,20 +48,20 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
  * resource that no longer exist in the others.
  * </p>
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
 public class EMFResourceMapping extends ResourceMapping {
 	/** We'll use this as the scheme of our remotely loaded resources. */
 	public static final String REMOTE_RESOURCE_SCHEME = "remote"; //$NON-NLS-1$
 
 	/** The physical resource of this mapping. */
-	private final IFile file;
+	private final IFile physicalFile;
 
 	/** The EMF Resource of this mapping. */
 	private final Resource emfResource;
 
 	/** Keep reference to the local resource set. */
-	private ResourceSet localResourceSet;
+	private final ResourceSet localResourceSet;
 
 	/** Keep reference to the remote resource set. */
 	private ResourceSet remoteResourceSet;
@@ -83,16 +83,16 @@ public class EMFResourceMapping extends ResourceMapping {
 	 * 
 	 * @param file
 	 *            The physical resource of this mapping.
-	 * @param emfResource
+	 * @param eResource
 	 *            The EMF Resource of this mapping.
-	 * @param providerId
+	 * @param modelProviderID
 	 *            The Model provider for which this mapping should be created.
 	 */
-	public EMFResourceMapping(IFile file, Resource emfResource, String providerId) {
-		this.file = file;
-		this.emfResource = emfResource;
-		this.providerId = providerId;
-		this.localResourceSet = emfResource.getResourceSet();
+	public EMFResourceMapping(IFile file, Resource eResource, String modelProviderID) {
+		this.physicalFile = file;
+		this.emfResource = eResource;
+		this.providerId = modelProviderID;
+		this.localResourceSet = eResource.getResourceSet();
 	}
 
 	/**
@@ -122,10 +122,10 @@ public class EMFResourceMapping extends ResourceMapping {
 	 */
 	@Override
 	public IProject[] getProjects() {
-		Set<IResource> physicalResources = resolvePhysicalResources();
+		final Set<IResource> physicalResources = resolvePhysicalResources();
 
-		Set<IProject> projects = new LinkedHashSet<IProject>(physicalResources.size());
-		for (IResource iResource : physicalResources) {
+		final Set<IProject> projects = new LinkedHashSet<IProject>(physicalResources.size());
+		for (final IResource iResource : physicalResources) {
 			projects.add(iResource.getProject());
 		}
 
@@ -145,24 +145,24 @@ public class EMFResourceMapping extends ResourceMapping {
 			resolveLocalResourceSet(monitor);
 
 			if (context instanceof RemoteResourceMappingContext) {
-				RemoteResourceMappingContext remoteContext = (RemoteResourceMappingContext)context;
+				final RemoteResourceMappingContext remoteContext = (RemoteResourceMappingContext)context;
 
-				for (Resource eResource : localResourceSet.getResources()) {
+				for (final Resource eResource : localResourceSet.getResources()) {
 					final IFile localFile;
 					if (eResource == emfResource) {
-						localFile = file;
+						localFile = physicalFile;
 					} else {
 						localFile = (IFile)EclipseModelUtils.findIResource(eResource);
 					}
 
-					IStorage remoteContents = remoteContext.fetchRemoteContents(localFile, monitor);
-					IStorage ancestorContents = remoteContext.fetchBaseContents(localFile, monitor);
+					final IStorage remoteContents = remoteContext.fetchRemoteContents(localFile, monitor);
+					final IStorage ancestorContents = remoteContext.fetchBaseContents(localFile, monitor);
 
 					if (remoteContents != null) {
 						if (remoteResourceSet == null) {
 							remoteResourceSet = createRemoteResourceSet(localFile, remoteContents);
 						} else {
-							RevisionedURIConverter converter = (RevisionedURIConverter)remoteResourceSet
+							final RevisionedURIConverter converter = (RevisionedURIConverter)remoteResourceSet
 									.getURIConverter();
 							converter.setStorage(remoteContents);
 						}
@@ -172,7 +172,7 @@ public class EMFResourceMapping extends ResourceMapping {
 						if (ancestorResourceSet == null) {
 							ancestorResourceSet = createRemoteResourceSet(localFile, ancestorContents);
 						} else {
-							RevisionedURIConverter converter = (RevisionedURIConverter)ancestorResourceSet
+							final RevisionedURIConverter converter = (RevisionedURIConverter)ancestorResourceSet
 									.getURIConverter();
 							converter.setStorage(ancestorContents);
 						}
@@ -199,7 +199,7 @@ public class EMFResourceMapping extends ResourceMapping {
 		 * this logical model, whether they exist locally or not.
 		 */
 
-		ResourceTraversal traversal = new ResourceTraversal(
+		final ResourceTraversal traversal = new ResourceTraversal(
 				iResourcesInScope.toArray(new IResource[iResourcesInScope.size()]), IResource.DEPTH_ONE,
 				IResource.NONE);
 
@@ -268,11 +268,11 @@ public class EMFResourceMapping extends ResourceMapping {
 
 		iResourcesInScope = new LinkedHashSet<IResource>();
 
-		for (Resource eResource : localResourceSet.getResources()) {
+		for (final Resource eResource : localResourceSet.getResources()) {
 			if (eResource == emfResource) {
-				iResourcesInScope.add(file);
+				iResourcesInScope.add(physicalFile);
 			} else {
-				IResource iResource = EclipseModelUtils.findIResource(eResource);
+				final IResource iResource = EclipseModelUtils.findIResource(eResource);
 				if (iResource != null) {
 					iResourcesInScope.add(iResource);
 				}
@@ -280,8 +280,8 @@ public class EMFResourceMapping extends ResourceMapping {
 		}
 
 		if (remoteResourceSet != null) {
-			for (Resource eResource : remoteResourceSet.getResources()) {
-				IResource iResource = EclipseModelUtils.findIResource(eResource);
+			for (final Resource eResource : remoteResourceSet.getResources()) {
+				final IResource iResource = EclipseModelUtils.findIResource(eResource);
 				if (iResource != null) {
 					iResourcesInScope.add(iResource);
 				}
@@ -289,8 +289,8 @@ public class EMFResourceMapping extends ResourceMapping {
 		}
 
 		if (ancestorResourceSet != null) {
-			for (Resource eResource : ancestorResourceSet.getResources()) {
-				IResource iResource = EclipseModelUtils.findIResource(eResource);
+			for (final Resource eResource : ancestorResourceSet.getResources()) {
+				final IResource iResource = EclipseModelUtils.findIResource(eResource);
 				if (iResource != null) {
 					iResourcesInScope.add(iResource);
 				}
@@ -304,16 +304,16 @@ public class EMFResourceMapping extends ResourceMapping {
 	 * This will try and resolve all logical resources that constitute this model in the local resource set.
 	 * 
 	 * @param monitor
-	 * @return The list of all logical resources that constitute this model.
+	 *            monitor to track progress.
 	 */
 	private void resolveLocalResourceSet(IProgressMonitor monitor) {
-		Iterator<ModelResolverDescriptor> modelResolverIterator = EMFCompareExtensionRegistry
+		final Iterator<ModelResolverDescriptor> modelResolverIterator = EMFCompareExtensionRegistry
 				.getRegisteredModelResolvers().iterator();
 		boolean resolved = false;
 		while (!resolved && modelResolverIterator.hasNext()) {
-			ModelResolverDescriptor descriptor = modelResolverIterator.next();
+			final ModelResolverDescriptor descriptor = modelResolverIterator.next();
 			if (descriptor.canResolve(new ModelIdentifier(emfResource))) {
-				descriptor.getModelResolver().resolve(file, emfResource, monitor);
+				descriptor.getModelResolver().resolve(physicalFile, emfResource, monitor);
 				resolved = true;
 			}
 		}
@@ -340,20 +340,20 @@ public class EMFResourceMapping extends ResourceMapping {
 		if (resourceURI.isPlatform()) {
 			resourcePath = resourcePath.substring(resourcePath.indexOf('/') + 1);
 		}
-		URI actualURI = URI.createURI(REMOTE_RESOURCE_SCHEME + ':' + '/' + resourcePath);
-		Resource resource = resourceSet.createResource(actualURI);
+		final URI actualURI = URI.createURI(REMOTE_RESOURCE_SCHEME + ':' + '/' + resourcePath);
+		final Resource resource = resourceSet.createResource(actualURI);
 
 		InputStream remoteStream = null;
 		try {
 			remoteStream = storage.getContents();
 			resource.load(remoteStream, Collections.emptyMap());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			// FIXME log
 		} finally {
 			if (remoteStream != null) {
 				try {
 					remoteStream.close();
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					// FIXME log
 				}
 			}
@@ -375,7 +375,7 @@ public class EMFResourceMapping extends ResourceMapping {
 	 */
 	private static ResourceSet createRemoteResourceSet(IResource baseResource, IStorage storage)
 			throws CoreException {
-		ResourceSet resourceSet = new ResourceSetImpl();
+		final ResourceSet resourceSet = new ResourceSetImpl();
 
 		resourceSet.setURIConverter(new RevisionedURIConverter(resourceSet.getURIConverter(), storage));
 

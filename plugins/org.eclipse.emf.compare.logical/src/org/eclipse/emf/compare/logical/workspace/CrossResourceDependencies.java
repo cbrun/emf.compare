@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2006, 2011 Obeo.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Obeo - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace;
 
 import java.util.Set;
@@ -20,40 +30,40 @@ import com.google.common.collect.Sets;
  * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
  */
-public class WorkspaceDependencies {
+public class CrossResourceDependencies {
 
 	private static final Function<Resource, IFile> ERESOURCE_TO_IFILE = new Function<Resource, IFile>() {
 
 		public IFile apply(Resource from) {
-			URI eUri = from.getURI();
+			final URI eUri = from.getURI();
 			assert eUri.isPlatformResource() == true;
-			String platformString = eUri.toPlatformString(true);
+			final String platformString = eUri.toPlatformString(true);
 			return (IFile)ResourcesPlugin.getWorkspace().getRoot().findMember(platformString);
 		}
 	};
 
-	private ResourceSet set;
+	private final ResourceSet set;
 
-	private ECrossReferenceAdapter xRef;
+	private final ECrossReferenceAdapter xRef;
 
-	public WorkspaceDependencies(ResourceSet set) {
-		this.set = set;
+	public CrossResourceDependencies(ResourceSet resourceSet) {
+		this.set = resourceSet;
 		this.xRef = new ECrossReferenceAdapter();
 		this.set.eAdapters().add(xRef);
 	}
 
 	public Iterable<IFile> getInverseReferences(Iterable<IFile> roots) {
-		Set<Resource> dependantEmfResources = Sets.newLinkedHashSet();
-		for (IFile iFile : roots) {
-			URI rootFileURI = URI.createPlatformResourceURI(iFile.getFullPath().toOSString(), true);
+		final Set<Resource> dependantEmfResources = Sets.newLinkedHashSet();
+		for (final IFile iFile : roots) {
+			final URI rootFileURI = URI.createPlatformResourceURI(iFile.getFullPath().toOSString(), true);
 
-			Resource rootRes = set.getResource(rootFileURI, true);
+			final Resource rootRes = set.getResource(rootFileURI, true);
 
 			assert rootRes.getContents().get(0) instanceof Model;
 
-			Model model = (Model)rootRes.getContents().get(0);
-			for (EStructuralFeature.Setting inverseSetting : xRef.getInverseReferences(model, true)) {
-				EObject inverseHost = inverseSetting.getEObject();
+			final Model model = (Model)rootRes.getContents().get(0);
+			for (final EStructuralFeature.Setting inverseSetting : xRef.getInverseReferences(model, true)) {
+				final EObject inverseHost = inverseSetting.getEObject();
 				if (inverseHost instanceof Dependency) {
 					dependantEmfResources.add(inverseHost.eResource());
 				}
@@ -65,16 +75,16 @@ public class WorkspaceDependencies {
 	}
 
 	public Iterable<IFile> getDependencies(Set<IFile> roots) {
-		Set<Resource> dependantEmfResources = Sets.newLinkedHashSet();
-		for (IFile iFile : roots) {
-			URI rootFileURI = URI.createPlatformResourceURI(iFile.getFullPath().toOSString(), true);
+		final Set<Resource> dependantEmfResources = Sets.newLinkedHashSet();
+		for (final IFile iFile : roots) {
+			final URI rootFileURI = URI.createPlatformResourceURI(iFile.getFullPath().toOSString(), true);
 
-			Resource rootRes = set.getResource(rootFileURI, true);
+			final Resource rootRes = set.getResource(rootFileURI, true);
 
 			assert rootRes.getContents().get(0) instanceof Model;
 
-			Model model = (Model)rootRes.getContents().get(0);
-			for (Dependency dep : model.getDependencies()) {
+			final Model model = (Model)rootRes.getContents().get(0);
+			for (final Dependency dep : model.getDependencies()) {
 				if (dep.getTarget().eResource() != null) {
 					dependantEmfResources.add(dep.getTarget().eResource());
 					// TODO find a way to show/discriminate non resolvable dependencies

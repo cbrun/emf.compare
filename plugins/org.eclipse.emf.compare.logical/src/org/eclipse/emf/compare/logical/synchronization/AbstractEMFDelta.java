@@ -24,22 +24,25 @@ import org.eclipse.team.core.diff.ITwoWayDiff;
 /**
  * This class will wraps an {@link IDiff} and serve as the basis of all of our EMF model element deltas.
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
-public abstract class EMFDelta {
+public abstract class AbstractEMFDelta {
 	/** Children of this delta. */
-	private final List<EMFDelta> children = new ArrayList<EMFDelta>();
+	private final List<AbstractEMFDelta> children = new ArrayList<AbstractEMFDelta>();
 
 	/** Parent of this delta. */
-	private EMFDelta parent;
+	private AbstractEMFDelta parent;
 
 	/**
-	 * Create a delta for the given element
+	 * Create a delta for the given element.
+	 * 
+	 * @param parentDelta
+	 *            the parentDelta.
 	 */
-	public EMFDelta(EMFDelta parent) {
-		this.parent = parent;
-		if (parent != null) {
-			parent.getChildren().add(this);
+	public AbstractEMFDelta(AbstractEMFDelta parentDelta) {
+		this.parent = parentDelta;
+		if (parentDelta != null) {
+			parentDelta.getChildren().add(this);
 		}
 	}
 
@@ -47,7 +50,7 @@ public abstract class EMFDelta {
 	 * Clears out the content of this delta.
 	 */
 	public void clear() {
-		for (EMFDelta child : getChildren()) {
+		for (AbstractEMFDelta child : getChildren()) {
 			child.clear();
 		}
 		children.clear();
@@ -63,16 +66,16 @@ public abstract class EMFDelta {
 	 * @return <em>this</em> if it is a delta for <em>object</em>. Otherwise, the child delta if any,
 	 *         <code>null</code> if none.
 	 */
-	public EMFDelta getChildDeltaFor(Object object) {
-		EMFDelta childDelta = null;
+	public AbstractEMFDelta getChildDeltaFor(Object object) {
+		AbstractEMFDelta childDelta = null;
 		if (this.isDeltaFor(object)) {
 			return this;
 		}
 
 		// Search the direct children
-		Iterator<EMFDelta> childIterator = getChildren().iterator();
+		Iterator<AbstractEMFDelta> childIterator = getChildren().iterator();
 		while (childDelta == null && childIterator.hasNext()) {
-			EMFDelta child = childIterator.next();
+			final AbstractEMFDelta child = childIterator.next();
 			if (child.isDeltaFor(object)) {
 				childDelta = child;
 			}
@@ -82,7 +85,7 @@ public abstract class EMFDelta {
 		if (childDelta == null) {
 			childIterator = getChildren().iterator();
 			while (childDelta == null && childIterator.hasNext()) {
-				EMFDelta child = childIterator.next();
+				final AbstractEMFDelta child = childIterator.next();
 				childDelta = child.getChildDeltaFor(object);
 			}
 		}
@@ -99,9 +102,9 @@ public abstract class EMFDelta {
 	 *         <code>false</code> otherwise.
 	 */
 	public boolean isDeltaFor(Object object) {
-		Object local = getLocal();
-		Object remote = getRemote();
-		Object ancestor = getAncestor();
+		final Object local = getLocal();
+		final Object remote = getRemote();
+		final Object ancestor = getAncestor();
 
 		boolean isDelta = false;
 		if (local != null && (local == object || local.equals(object))) {
@@ -122,7 +125,7 @@ public abstract class EMFDelta {
 	 * 
 	 * @return All of the children of this delta.
 	 */
-	public List<EMFDelta> getChildren() {
+	public List<AbstractEMFDelta> getChildren() {
 		return children;
 	}
 
@@ -131,7 +134,7 @@ public abstract class EMFDelta {
 	 * 
 	 * @return The parent of this delta.
 	 */
-	public EMFDelta getParent() {
+	public AbstractEMFDelta getParent() {
 		return parent;
 	}
 
@@ -141,7 +144,7 @@ public abstract class EMFDelta {
 	 * @return The root of this delta's containing tree.
 	 */
 	public EMFModelDelta getRoot() {
-		EMFDelta parentDelta = getParent();
+		AbstractEMFDelta parentDelta = getParent();
 		while (parentDelta != null && !(parentDelta instanceof EMFModelDelta)) {
 			parentDelta = parentDelta.getParent();
 		}
@@ -224,9 +227,6 @@ public abstract class EMFDelta {
 
 	/**
 	 * Creates the children delta for this Resource delta.
-	 * 
-	 * @param diffModel
-	 *            The diff model from which to retrieve children diffs.
 	 */
 	protected abstract void createChildren();
 }

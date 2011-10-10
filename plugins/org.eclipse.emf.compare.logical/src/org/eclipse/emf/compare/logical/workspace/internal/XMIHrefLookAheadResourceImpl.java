@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2006, 2011 Obeo.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Obeo - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace.internal;
 
 import java.io.IOException;
@@ -19,39 +29,60 @@ import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 
 /**
- * @author cedric
+ * A {@link DependencyResource} implementation specific to XMI. It is parsing the xmi input looking for
+ * external references but not actually loading the model. It is way faster than
+ * {@link DelegatingHrefLookAheadResourceImpl} but only works in case of XMI resources.
+ * 
+ * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
  */
-public class XMIHrefLookAheadResourceImpl extends ResourceImpl {
+public class XMIHrefLookAheadResourceImpl extends ResourceImpl implements DependencyResource {
 
+	/**
+	 * Create a new resource.
+	 * 
+	 * @param uri
+	 *            uri to use to create the resource.
+	 */
 	public XMIHrefLookAheadResourceImpl(URI uri) {
 		super(uri);
 	}
 
 	@Override
 	protected void doLoad(InputStream is, Map<?, ?> options) throws IOException {
-		Set<String> foundDependencies = collectDependencies(is);
+		final Set<String> foundDependencies = collectDependencies(is);
 
-		Model root = WorkspaceFactory.eINSTANCE.createModel();
+		final Model root = WorkspaceFactory.eINSTANCE.createModel();
 		getContents().add(root);
 
-		for (String uri : foundDependencies) {
-			Dependency newDep = WorkspaceFactory.eINSTANCE.createDependency();
+		for (final String uri : foundDependencies) {
+			final Dependency newDep = WorkspaceFactory.eINSTANCE.createDependency();
 			newDep.setTarget(forgeProxy(uri));
 			root.getDependencies().add(newDep);
 		}
 
 	}
 
+	/**
+	 * Collect the list of file dependencies from an inputstream containing an XMI serialization.
+	 * 
+	 * @param is
+	 *            inputstream providing XMI.
+	 * @return all the "other resources" dependencies.
+	 * @throws UnsupportedEncodingException
+	 *             when the given encoding is not supported.
+	 * @throws IOException
+	 *             in case of IO error.
+	 */
 	private Set<String> collectDependencies(InputStream is) throws UnsupportedEncodingException, IOException {
-		Set<String> foundDependencies = new LinkedHashSet<String>();
+		final Set<String> foundDependencies = new LinkedHashSet<String>();
 
 		// a depedency looks like this : href="SimpleMM1I%20/my/othernstance2.xmi#/
 
 		final char[] buffer = new char[0x10000];
-		StringBuilder out = new StringBuilder();
+		final StringBuilder out = new StringBuilder();
 		// TODO find the encoding...
-		Reader in = new InputStreamReader(is, "UTF-8"); //$NON-NLS-1$
+		final Reader in = new InputStreamReader(is, "UTF-8"); //$NON-NLS-1$
 		int read;
 		do {
 			read = in.read(buffer, 0, buffer.length);
@@ -59,21 +90,26 @@ public class XMIHrefLookAheadResourceImpl extends ResourceImpl {
 				out.append(buffer, 0, read);
 			}
 		} while (read >= 0);
-		Pattern p = Pattern.compile("([a-zA-Z/\\.:]+)#"); //$NON-NLS-1$
+		final Pattern p = Pattern.compile("([a-zA-Z/\\.:]+)#"); //$NON-NLS-1$
 
-		Matcher m = p.matcher(out.toString());
+		final Matcher m = p.matcher(out.toString());
 		while (m.find()) {
-			String depURI = m.group(1);
+			final String depURI = m.group(1);
 			foundDependencies.add(depURI);
 		}
 		return foundDependencies;
 	}
 
+	/**
+	 * Forge an EObject proxy targeting the root element of the given resource uri.
+	 * 
+	 * @param resourceURI
+	 *            the resource URI.
+	 * @return a proxified {@link Model} which should be present at the root of the given resource uri.
+	 */
 	private Model forgeProxy(String resourceURI) {
-
-		URI uri = URI.createURI(resourceURI + "#/").resolve(getURI()); //$NON-NLS-1$
-
-		Model targetedModel = WorkspaceFactory.eINSTANCE.createModel();
+		final URI uri = URI.createURI(resourceURI + "#/").resolve(getURI()); //$NON-NLS-1$
+		final Model targetedModel = WorkspaceFactory.eINSTANCE.createModel();
 		((InternalEObject)targetedModel).eSetProxyURI(uri);
 		return targetedModel;
 	}

@@ -18,7 +18,7 @@ import java.util.List;
  * 
  * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
-public class EMFCompareExtensionRegistry {
+public final class EMFCompareExtensionRegistry {
 	/** List of all the model resolvers contributed through "org.eclipse.emf.compare.modelResolver". */
 	private static final List<ModelResolverDescriptor> MODEL_RESOLVERS = new ArrayList<ModelResolverDescriptor>();
 

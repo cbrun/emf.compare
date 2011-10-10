@@ -37,7 +37,7 @@ import org.eclipse.team.core.mapping.ISynchronizationContext;
  * be used to find all of these associated physical resources.
  * </p>
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
 public class EMFModelProvider extends ModelProvider {
 	/** ID of this model provider. Must match the definition from the plugin.xml. */
@@ -116,10 +116,10 @@ public class EMFModelProvider extends ModelProvider {
 	 * @return The {@link ResourceMapping}s that cover the given {@link IFile}.
 	 */
 	private ResourceMapping[] getMappings(IFile file, IProgressMonitor monitor) {
-		List<ResourceMapping> mappings = new ArrayList<ResourceMapping>();
+		final List<ResourceMapping> mappings = new ArrayList<ResourceMapping>();
 		// FIXME find a way to dispose of this resource set
 		try {
-			Resource resource = EclipseModelUtils.getResource(file, createLogicalModelResourceSet());
+			final Resource resource = EclipseModelUtils.getResource(file, createLogicalModelResourceSet());
 			if (resource != null) {
 				mappings.add(new EMFResourceMapping(file, resource, PROVIDER_ID));
 			}
@@ -135,7 +135,7 @@ public class EMFModelProvider extends ModelProvider {
 	 * @return The resource set that should be used to load this model's resources.
 	 */
 	private ResourceSet createLogicalModelResourceSet() {
-		ResourceSet resourceSet = new ResourceSetImpl();
+		final ResourceSet resourceSet = new ResourceSetImpl();
 		return resourceSet;
 	}
 }

@@ -26,7 +26,7 @@ import org.eclipse.emf.ecore.resource.ResourceSet;
 /**
  * This implementation of a resource visitor will allow us to browse all models in a given hierarchy.
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
 public class ModelResourceVisitor implements IResourceVisitor {
 	/** Content types of the files to consider as potential parents. */
@@ -35,7 +35,7 @@ public class ModelResourceVisitor implements IResourceVisitor {
 			"org.eclipse.emf.ecore.xmi",}; //$NON-NLS-1$
 
 	/** Resource Set in which we should load the temporary resources. */
-	private final ResourceSet resourceSet;
+	private final ResourceSet set;
 
 	/**
 	 * Instantiates a resource visitor given the ResourceSet in which to load the temporary resources.
@@ -44,7 +44,7 @@ public class ModelResourceVisitor implements IResourceVisitor {
 	 *            ResourceSet in which to load the temporary resources.
 	 */
 	public ModelResourceVisitor(ResourceSet resourceSet) {
-		this.resourceSet = resourceSet;
+		this.set = resourceSet;
 	}
 
 	/**
@@ -54,7 +54,7 @@ public class ModelResourceVisitor implements IResourceVisitor {
 	 */
 	public boolean visit(IResource resource) throws CoreException {
 		if (resource instanceof IFile) {
-			IFile file = (IFile)resource;
+			final IFile file = (IFile)resource;
 			boolean isModel = false;
 			for (String contentType : MODEL_CONTENT_TYPES) {
 				if (hasContentType(file, contentType)) {
@@ -64,7 +64,7 @@ public class ModelResourceVisitor implements IResourceVisitor {
 
 			if (isModel) {
 				try {
-					EclipseModelUtils.getResource(file, resourceSet);
+					EclipseModelUtils.getResource(file, set);
 					return true;
 				} catch (IOException e) {
 					// will return false;
@@ -87,8 +87,8 @@ public class ModelResourceVisitor implements IResourceVisitor {
 	 * @return <code>true</code> if the given {@link IFile} has the given content type.
 	 */
 	private boolean hasContentType(IFile resource, String contentTypeId) {
-		IContentTypeManager ctManager = Platform.getContentTypeManager();
-		IContentType expected = ctManager.getContentType(contentTypeId);
+		final IContentTypeManager ctManager = Platform.getContentTypeManager();
+		final IContentType expected = ctManager.getContentType(contentTypeId);
 		if (expected == null) {
 			return false;
 		}

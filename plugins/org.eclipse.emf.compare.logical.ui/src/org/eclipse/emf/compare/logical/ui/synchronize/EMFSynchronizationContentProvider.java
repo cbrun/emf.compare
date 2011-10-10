@@ -24,7 +24,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.emf.compare.logical.EMFLogicalModelMessages;
 import org.eclipse.emf.compare.logical.model.EMFModelProvider;
 import org.eclipse.emf.compare.logical.model.EMFResourceMapping;
-import org.eclipse.emf.compare.logical.synchronization.EMFDelta;
+import org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta;
 import org.eclipse.emf.compare.logical.synchronization.EMFModelDelta;
 import org.eclipse.emf.compare.util.AdapterUtils;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -143,7 +143,7 @@ public class EMFSynchronizationContentProvider extends SynchronizationContentPro
 			EMFModelDelta delta = (EMFModelDelta)cachedDelta;
 			List<Object> childrenInScope = new ArrayList<Object>();
 			for (Object child : children) {
-				EMFDelta childDelta = delta.getChildDeltaFor(child);
+				AbstractEMFDelta childDelta = delta.getChildDeltaFor(child);
 				if (childDelta != null
 						&& (childDelta.getKind() == IDiff.NO_CHANGE || includeDirection(childDelta
 								.getDirection()))) {

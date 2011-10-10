@@ -21,11 +21,11 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.team.core.diff.IDiff;
 
 /**
- * This subclass of an {@link EMFDelta} will describe changes in EMF Resources.
+ * This subclass of an {@link AbstractEMFDelta} will describe changes in EMF Resources.
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
-public class EMFResourceDelta extends EMFDelta {
+public class EMFResourceDelta extends AbstractEMFDelta {
 	/** Keeps track of the local resource for which this instance holds deltas. */
 	private Resource localResource;
 
@@ -46,25 +46,26 @@ public class EMFResourceDelta extends EMFDelta {
 	 * 
 	 * @param parent
 	 *            Our parent model delta.
-	 * @param diffModel
+	 * @param representedDiffModel
 	 *            The diff model we represent.
-	 * @param resourceDiff
+	 * @param platformResourceDiff
 	 *            The actual resource diff computed by the platform.
-	 * @param localResource
+	 * @param localEmfResource
 	 *            The local variant of the resource for which we'll hold deltas.
-	 * @param remoteResource
+	 * @param remoteEmfResource
 	 *            The remote variant of the resource for which we'll hold deltas.
-	 * @param ancestorResource
+	 * @param ancestorEmfResource
 	 *            The ancestor variant of the resource for which we'll hold deltas.
 	 */
-	public EMFResourceDelta(EMFDelta parent, DiffModel diffModel, IDiff resourceDiff, Resource localResource,
-			Resource remoteResource, Resource ancestorResource) {
+	public EMFResourceDelta(AbstractEMFDelta parent, DiffModel representedDiffModel,
+			IDiff platformResourceDiff, Resource localEmfResource, Resource remoteEmfResource,
+			Resource ancestorEmfResource) {
 		super(parent);
-		this.diff = resourceDiff;
-		this.diffModel = diffModel;
-		this.localResource = localResource;
-		this.remoteResource = remoteResource;
-		this.ancestorResource = ancestorResource;
+		this.diff = platformResourceDiff;
+		this.diffModel = representedDiffModel;
+		this.localResource = localEmfResource;
+		this.remoteResource = remoteEmfResource;
+		this.ancestorResource = ancestorEmfResource;
 
 		createChildren();
 	}
@@ -72,7 +73,7 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#clear()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#clear()
 	 */
 	@Override
 	public void clear() {
@@ -88,7 +89,7 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getLocal()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getLocal()
 	 */
 	@Override
 	public Object getLocal() {
@@ -98,7 +99,7 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getAncestor()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getAncestor()
 	 */
 	@Override
 	public Object getAncestor() {
@@ -108,7 +109,7 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getRemote()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getRemote()
 	 */
 	@Override
 	public Object getRemote() {
@@ -118,7 +119,7 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getDiff()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getDiff()
 	 */
 	@Override
 	public IDiff getDiff() {
@@ -128,11 +129,11 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getPath()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getPath()
 	 */
 	@Override
 	public IPath getPath() {
-		IResource localIResource = EclipseModelUtils.findIResource(localResource);
+		final IResource localIResource = EclipseModelUtils.findIResource(localResource);
 		if (localIResource != null) {
 			return localIResource.getFullPath();
 		}
@@ -142,7 +143,7 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#isDeltaFor(java.lang.Object)
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#isDeltaFor(java.lang.Object)
 	 */
 	@Override
 	public boolean isDeltaFor(Object object) {
@@ -152,8 +153,8 @@ public class EMFResourceDelta extends EMFDelta {
 		}
 
 		boolean isDelta = false;
-		IResource localIResource = EclipseModelUtils.findIResource(localResource);
-		IResource compareTo = EclipseModelUtils.findIResource((Resource)object);
+		final IResource localIResource = EclipseModelUtils.findIResource(localResource);
+		final IResource compareTo = EclipseModelUtils.findIResource((Resource)object);
 		if (localIResource != null && compareTo != null) {
 			isDelta = localIResource.getFullPath().equals(compareTo.getFullPath());
 		}
@@ -163,13 +164,13 @@ public class EMFResourceDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#createChildren()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#createChildren()
 	 */
 	@Override
 	protected void createChildren() {
 		// diff models contain a "parentless" diff group as root. Ignore it and switch to its children.
 		if (diffModel.getOwnedElements().size() == 1) {
-			DiffGroup group = (DiffGroup)diffModel.getOwnedElements().get(0);
+			final DiffGroup group = (DiffGroup)diffModel.getOwnedElements().get(0);
 			for (DiffElement childDiff : group.getSubDiffElements()) {
 				createChildDelta(childDiff);
 			}

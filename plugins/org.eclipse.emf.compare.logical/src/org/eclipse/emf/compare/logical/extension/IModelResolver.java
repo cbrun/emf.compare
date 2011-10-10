@@ -44,7 +44,7 @@ import org.eclipse.emf.ecore.resource.Resource;
  * resource's containing project for cross referencing resources that would be part of its logical model.
  * </p>
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  * @see org.eclipse.emf.compare.logical.extension.ScopedModelResolver
  */
 public interface IModelResolver {

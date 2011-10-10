@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2006, 2011 Obeo.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     Obeo - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace;
 
 import java.io.IOException;
@@ -20,33 +30,34 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.compare.logical.workspace.internal.DependencyResourceFactory;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 
 /**
- * @author cedric
+ * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
  */
 public class WorkspaceModelCollector {
 
 	private ResourceSet set;
 
-	private DependencyResourceFactory factory = new DependencyResourceFactory();
+	private final DependencyResourceFactory factory = new DependencyResourceFactory();
 
-	private Set<String> contentTypes;
+	private final Set<String> contentTypes;
 
-	private WorkspaceDependencies deps;
+	private CrossResourceDependencies deps;
 
-	public WorkspaceModelCollector(Set<String> contentTypes) {
-		this.contentTypes = contentTypes;
+	public WorkspaceModelCollector(Set<String> contentTypesToConsider) {
+		this.contentTypes = contentTypesToConsider;
 	}
 
 	public int getNumberOfFilesToCrawl() throws CoreException {
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		final IWorkspaceRoot root = workspace.getRoot();
 
-		CountingVisitor counter = new CountingVisitor();
+		final CountingVisitor counter = new CountingVisitor();
 		root.accept(counter);
 		return counter.getCount();
 	}
@@ -57,7 +68,7 @@ public class WorkspaceModelCollector {
 
 		public boolean visit(IResource resource) throws CoreException {
 			if (resource instanceof IFile) {
-				IFile file = (IFile)resource;
+				final IFile file = (IFile)resource;
 				if (isOfInterest(file)) {
 					result++;
 				}
@@ -71,30 +82,30 @@ public class WorkspaceModelCollector {
 
 	}
 
-	public WorkspaceDependencies crawl(final IProgressMonitor pm) throws CoreException {
+	public CrossResourceDependencies crawl(final IProgressMonitor pm) throws CoreException {
 		set = new ResourceSetImpl();
 		set.getResourceFactoryRegistry().getContentTypeToFactoryMap().put("*", factory); //$NON-NLS-1$
 		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put("*", factory); //$NON-NLS-1$
-		for (String contentType : contentTypes) {
+		for (final String contentType : contentTypes) {
 			set.getResourceFactoryRegistry().getExtensionToFactoryMap().put(contentType, factory);
 		}
 
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		final IWorkspaceRoot root = workspace.getRoot();
 
-		int todo = getNumberOfFilesToCrawl();
+		final int todo = getNumberOfFilesToCrawl();
 
 		pm.beginTask("Analyzing workspace dependencies", todo); //$NON-NLS-1$
 		root.accept(new IResourceVisitor() {
 
 			public boolean visit(IResource resource) throws CoreException {
 				if (resource instanceof IFile) {
-					IFile file = (IFile)resource;
+					final IFile file = (IFile)resource;
 					if (pm.isCanceled()) {
 						throw new RuntimeException("The user interrupted the operation."); //$NON-NLS-1$
 					}
 					if (isOfInterest(file)) {
-						URI fileURI = URI.createPlatformResourceURI(file.getFullPath().toOSString(), true);
+						final URI fileURI = URI.createPlatformResourceURI(file.getFullPath().toOSString(), true);
 						set.getResource(fileURI, true);
 						pm.worked(1);
 					}
@@ -105,7 +116,7 @@ public class WorkspaceModelCollector {
 		});
 		pm.done();
 
-		deps = new WorkspaceDependencies(set);
+		deps = new CrossResourceDependencies(set);
 
 		return deps;
 	}
@@ -124,7 +135,7 @@ public class WorkspaceModelCollector {
 			// Only listening to these.
 			// if (event.getType() == IResourceDelta.POST_CHANGE)
 			{
-				IResourceDelta delta = event.getDelta();
+				final IResourceDelta delta = event.getDelta();
 				try {
 					class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 						protected ResourceSet resourceSet = deps.getResourceSet();
@@ -139,7 +150,7 @@ public class WorkspaceModelCollector {
 							if (delta.getFlags() != IResourceDelta.MARKERS
 									&& delta.getResource().getType() == IResource.FILE) {
 								if ((delta.getKind() & (IResourceDelta.CHANGED | IResourceDelta.REMOVED)) != 0) {
-									Resource resource = resourceSet.getResource(
+									final Resource resource = resourceSet.getResource(
 											URI.createURI(delta.getFullPath().toString()), false);
 									if (resource != null) {
 										if ((delta.getKind() & IResourceDelta.REMOVED) != 0) {
@@ -150,9 +161,9 @@ public class WorkspaceModelCollector {
 									}
 								} else if (delta.getKind() == IResourceDelta.ADDED) {
 									//
-									IFile file = (IFile)delta.getResource();
+									final IFile file = (IFile)delta.getResource();
 									if (isOfInterest(file)) {
-										URI fileURI = URI.createPlatformResourceURI(file.getFullPath()
+										final URI fileURI = URI.createPlatformResourceURI(file.getFullPath()
 												.toOSString(), true);
 										set.getResource(fileURI, true);
 									}
@@ -171,7 +182,7 @@ public class WorkspaceModelCollector {
 						}
 					}
 
-					ResourceDeltaVisitor visitor = new ResourceDeltaVisitor();
+					final ResourceDeltaVisitor visitor = new ResourceDeltaVisitor();
 					/*
 					 * looks like delta might be null on some cases (experienced it on major workspace changes
 					 * like deleting all the projects)
@@ -179,24 +190,24 @@ public class WorkspaceModelCollector {
 					if (delta != null)
 						delta.accept(visitor);
 
-					for (Resource removed : visitor.getRemovedResources()) {
+					for (final Resource removed : visitor.getRemovedResources()) {
 						removed.unload();
 						set.getResources().remove(removed);
 					}
 
-					for (Iterator<Resource> i = visitor.getChangedResources().iterator(); i.hasNext();) {
-						Resource resource = i.next();
+					for (final Iterator<Resource> i = visitor.getChangedResources().iterator(); i.hasNext();) {
+						final Resource resource = i.next();
 						if (resource.isLoaded()) {
 							resource.unload();
 							try {
 								resource.load(Collections.EMPTY_MAP);
-							} catch (IOException exception) {
+							} catch (final IOException exception) {
 								// TODO log or remove
 							}
 						}
 					}
 
-				} catch (CoreException exception) {
+				} catch (final CoreException exception) {
 					// TODO log or remove
 				}
 			}

@@ -29,12 +29,12 @@ import org.eclipse.team.core.diff.provider.ThreeWayDiff;
 import org.eclipse.team.core.diff.provider.TwoWayDiff;
 
 /**
- * This subclass of an {@link EMFDelta} will act as a container for other deltas. It is the counterpart of EMF
- * Compare {@link DiffGroup}s.
+ * This subclass of an {@link AbstractEMFDelta} will act as a container for other deltas. It is the
+ * counterpart of EMF Compare {@link DiffGroup}s.
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
-public class EMFEObjectDelta extends EMFDelta {
+public class EMFEObjectDelta extends AbstractEMFDelta {
 	/** Keeps track of the local EObject for which this instance holds deltas. */
 	private EObject localObject;
 
@@ -55,27 +55,28 @@ public class EMFEObjectDelta extends EMFDelta {
 	 * 
 	 * @param parent
 	 *            Parent of this delta.
-	 * @param diffGroup
+	 * @param deltaDiffGroup
 	 *            The DiffGroup for which to create this delta.
 	 */
-	public EMFEObjectDelta(EMFDelta parent, DiffGroup diffGroup) {
+	public EMFEObjectDelta(AbstractEMFDelta parent, DiffGroup deltaDiffGroup) {
 		super(parent);
-		this.diffGroup = diffGroup;
+		this.diffGroup = deltaDiffGroup;
 
 		// Find back the three objects to which this group correspond
-		EObject rightObject = diffGroup.getRightParent();
-		String uriFragment = EcoreUtil.getURI(rightObject).fragment();
+		final EObject rightObject = deltaDiffGroup.getRightParent();
+		final String uriFragment = EcoreUtil.getURI(rightObject).fragment();
 
-		EMFDelta resourceDeltaContainer = parent;
+		AbstractEMFDelta resourceDeltaContainer = parent;
 		while (resourceDeltaContainer.getParent() != null
 				&& !(resourceDeltaContainer instanceof EMFResourceDelta)) {
 			resourceDeltaContainer = resourceDeltaContainer.getParent();
 		}
 
 		if (resourceDeltaContainer instanceof EMFResourceDelta) {
-			Resource localResource = (Resource)((EMFResourceDelta)resourceDeltaContainer).getLocal();
-			Resource remoteResource = (Resource)((EMFResourceDelta)resourceDeltaContainer).getRemote();
-			Resource ancestorResource = (Resource)((EMFResourceDelta)resourceDeltaContainer).getAncestor();
+			final Resource localResource = (Resource)((EMFResourceDelta)resourceDeltaContainer).getLocal();
+			final Resource remoteResource = (Resource)((EMFResourceDelta)resourceDeltaContainer).getRemote();
+			final Resource ancestorResource = (Resource)((EMFResourceDelta)resourceDeltaContainer)
+					.getAncestor();
 
 			localObject = localResource.getEObject(uriFragment);
 			remoteObject = remoteResource.getEObject(uriFragment);
@@ -90,7 +91,7 @@ public class EMFEObjectDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#clear()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#clear()
 	 */
 	@Override
 	public void clear() {
@@ -106,7 +107,7 @@ public class EMFEObjectDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getDiff()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getDiff()
 	 */
 	@Override
 	public IDiff getDiff() {
@@ -114,10 +115,10 @@ public class EMFEObjectDelta extends EMFDelta {
 			int localKind = IDiff.NO_CHANGE;
 			int remoteKind = IDiff.NO_CHANGE;
 			// Browse the diff group and check wether we have local and/or remote changes
-			Iterator<DiffElement> subDiffIterator = getAllSubDifferences(diffGroup).iterator();
+			final Iterator<DiffElement> subDiffIterator = getAllSubDifferences(diffGroup).iterator();
 			while ((localKind == IDiff.NO_CHANGE || remoteKind == IDiff.NO_CHANGE)
 					&& subDiffIterator.hasNext()) {
-				DiffElement child = subDiffIterator.next();
+				final DiffElement child = subDiffIterator.next();
 
 				if (child.isRemote()) {
 					remoteKind = IDiff.CHANGE;
@@ -127,8 +128,8 @@ public class EMFEObjectDelta extends EMFDelta {
 			}
 
 			if (ancestorObject != null) {
-				ITwoWayDiff localDiff = new TwoWayDiff(getPath(), localKind, 0);
-				ITwoWayDiff remoteDiff = new TwoWayDiff(getPath(), remoteKind, 0);
+				final ITwoWayDiff localDiff = new TwoWayDiff(getPath(), localKind, 0);
+				final ITwoWayDiff remoteDiff = new TwoWayDiff(getPath(), remoteKind, 0);
 				diff = new ThreeWayDiff(localDiff, remoteDiff);
 			} else {
 				diff = new TwoWayDiff(getPath(), localKind, 0);
@@ -140,7 +141,7 @@ public class EMFEObjectDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getRemote()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getRemote()
 	 */
 	@Override
 	public Object getRemote() {
@@ -150,7 +151,7 @@ public class EMFEObjectDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getLocal()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getLocal()
 	 */
 	@Override
 	public Object getLocal() {
@@ -160,7 +161,7 @@ public class EMFEObjectDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getAncestor()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getAncestor()
 	 */
 	@Override
 	public Object getAncestor() {
@@ -170,18 +171,18 @@ public class EMFEObjectDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#getPath()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#getPath()
 	 */
 	@Override
 	public IPath getPath() {
-		URI uri = EcoreUtil.getURI(diffGroup.getRightParent());
+		final URI uri = EcoreUtil.getURI(diffGroup.getRightParent());
 		return new Path(uri.toString());
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#createChildren()
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#createChildren()
 	 */
 	@Override
 	protected void createChildren() {
@@ -193,7 +194,7 @@ public class EMFEObjectDelta extends EMFDelta {
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * @see org.eclipse.emf.compare.logical.synchronization.EMFDelta#isDeltaFor(java.lang.Object)
+	 * @see org.eclipse.emf.compare.logical.synchronization.AbstractEMFDelta#isDeltaFor(java.lang.Object)
 	 */
 	@Override
 	public boolean isDeltaFor(Object object) {
@@ -224,7 +225,7 @@ public class EMFEObjectDelta extends EMFDelta {
 	 *         themselves.
 	 */
 	private static EList<DiffElement> getAllSubDifferences(DiffElement element) {
-		EList<DiffElement> ownedDifferences = new BasicEList<DiffElement>();
+		final EList<DiffElement> ownedDifferences = new BasicEList<DiffElement>();
 
 		for (DiffElement diff : element.getSubDiffElements()) {
 			if (diff instanceof DiffGroup || diff instanceof ConflictingDiffElementImpl) {

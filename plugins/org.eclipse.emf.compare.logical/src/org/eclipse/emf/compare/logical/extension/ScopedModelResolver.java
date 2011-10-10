@@ -34,23 +34,23 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
  * Take note that this implementation is generic, and thus extremely costly.
  * </p>
  * 
- * @author <a href="mailto:laurent.goubet@obeo.fr">laurent Goubet</a>
+ * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
 public class ScopedModelResolver implements IModelResolver {
 	/** Keeps track of the resources we've already walked up. */
 	private Set<Resource> walkedResources = new HashSet<Resource>();
 
 	/**
-	 * {@inheritDoc}
+	 * {@inheritDoc}.
 	 * 
 	 * @see org.eclipse.emf.compare.logical.extension.IModelResolver#resolve(org.eclipse.core.resources.IFile,
 	 *      org.eclipse.emf.ecore.resource.Resource)
 	 */
 	public void resolve(IFile iFile, Resource eResource, IProgressMonitor monitor) {
 		// We'll load every "model" resource we find in this temporary resource set.
-		ResourceSet temporaryResourceSet = new ResourceSetImpl();
+		final ResourceSet temporaryResourceSet = new ResourceSetImpl();
 
-		IContainer container = getScope(iFile);
+		final IContainer container = getScope(iFile);
 		try {
 			container.accept(new ModelResourceVisitor(temporaryResourceSet));
 		} catch (CoreException e) {
@@ -61,8 +61,8 @@ public class ScopedModelResolver implements IModelResolver {
 		 * We now have a temporary resource set containing all EMF resources of this project. We'll now try
 		 * and find all Resources that reference "eResource".
 		 */
-		URI resourceURI = eResource.getURI();
-		Resource baseResource = temporaryResourceSet.getResource(resourceURI, false);
+		final URI resourceURI = eResource.getURI();
+		final Resource baseResource = temporaryResourceSet.getResource(resourceURI, false);
 		if (baseResource != null) {
 			EcoreUtil.CrossReferencer crossReferencer = new EcoreUtil.CrossReferencer(temporaryResourceSet) {
 				private static final long serialVersionUID = 1L;
@@ -71,14 +71,14 @@ public class ScopedModelResolver implements IModelResolver {
 					crossReference();
 				}
 			};
-			Set<Resource> crossReferencingResources = findCrossReferencingResources(crossReferencer,
+			final Set<Resource> crossReferencingResources = findCrossReferencingResources(crossReferencer,
 					baseResource);
 
 			/*
 			 * We now know all resources that reference "baseResource", close or far. These compose the whole
 			 * logical model which "baseResource" is a part of. Resolve them all in the base resource set.
 			 */
-			ResourceSet baseResourceSet = eResource.getResourceSet();
+			final ResourceSet baseResourceSet = eResource.getResourceSet();
 			for (Resource crossReferencing : crossReferencingResources) {
 				baseResourceSet.getResource(crossReferencing.getURI(), true);
 			}
@@ -99,7 +99,7 @@ public class ScopedModelResolver implements IModelResolver {
 	 * 
 	 * @param iFile
 	 *            The file containing the "selected Resource" of
-	 * @return
+	 * @return the scope for the given file.
 	 */
 	protected IContainer getScope(IFile iFile) {
 		return iFile.getParent();
@@ -117,7 +117,7 @@ public class ScopedModelResolver implements IModelResolver {
 	 */
 	protected Set<Resource> findCrossReferencingResources(EcoreUtil.CrossReferencer crossReferencer,
 			Resource baseResource) {
-		Set<Resource> crossReferencingResources = new HashSet<Resource>();
+		final Set<Resource> crossReferencingResources = new HashSet<Resource>();
 		if (walkedResources.contains(baseResource)) {
 			return crossReferencingResources;
 		}
@@ -126,7 +126,7 @@ public class ScopedModelResolver implements IModelResolver {
 		for (EObject root : baseResource.getContents()) {
 			crossReferencingResources.addAll(findCrossReferencingResources(crossReferencer, root));
 
-			Iterator<EObject> rootContent = root.eAllContents();
+			final Iterator<EObject> rootContent = root.eAllContents();
 			while (rootContent.hasNext()) {
 				crossReferencingResources.addAll(findCrossReferencingResources(crossReferencer,
 						rootContent.next()));
@@ -154,15 +154,15 @@ public class ScopedModelResolver implements IModelResolver {
 	 */
 	protected Set<Resource> findCrossReferencingResources(EcoreUtil.CrossReferencer crossReferencer,
 			EObject object) {
-		Set<Resource> crossReferencingResources = new HashSet<Resource>();
+		final Set<Resource> crossReferencingResources = new HashSet<Resource>();
 
-		Resource baseResource = object.eResource();
-		Collection<EStructuralFeature.Setting> crossReferences = crossReferencer.get(object);
+		final Resource baseResource = object.eResource();
+		final Collection<EStructuralFeature.Setting> crossReferences = crossReferencer.get(object);
 		if (crossReferences != null) {
-			Iterator<EStructuralFeature.Setting> crossReferenceIterator = crossReferences.iterator();
+			final Iterator<EStructuralFeature.Setting> crossReferenceIterator = crossReferences.iterator();
 			while (crossReferenceIterator.hasNext()) {
-				EObject nextObject = crossReferenceIterator.next().getEObject();
-				Resource nextResource = nextObject.eResource();
+				final EObject nextObject = crossReferenceIterator.next().getEObject();
+				final Resource nextResource = nextObject.eResource();
 				if (baseResource != nextResource) {
 					crossReferencingResources.add(nextResource);
 				}
