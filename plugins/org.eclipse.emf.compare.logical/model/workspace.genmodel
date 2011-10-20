@@ -10,6 +10,7 @@
       ecorePackage="workspace.ecore#/">
     <genClasses ecoreClass="workspace.ecore#//Model">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference workspace.ecore#//Model/dependencies"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute workspace.ecore#//Model/loadable"/>
     </genClasses>
     <genClasses ecoreClass="workspace.ecore#//Dependency">
       <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference workspace.ecore#//Dependency/target"/>

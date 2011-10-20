@@ -10,6 +10,11 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -21,37 +26,56 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.util.ECrossReferenceAdapter;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
-
 /**
+ * This class is responsible for providing IFile inverse references from a resource set providing a light
+ * image of models and their dependencies (see {@link WorkspaceModelDependenciesSynchronizer}.
+ * 
  * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
  */
 public class CrossResourceDependencies {
-
+	/**
+	 * Transforms an EResource to its corresponding IFile.
+	 */
 	private static final Function<Resource, IFile> ERESOURCE_TO_IFILE = new Function<Resource, IFile>() {
 
 		public IFile apply(Resource from) {
 			final URI eUri = from.getURI();
-			assert eUri.isPlatformResource() == true;
 			final String platformString = eUri.toPlatformString(true);
 			return (IFile)ResourcesPlugin.getWorkspace().getRoot().findMember(platformString);
 		}
 	};
 
+	/**
+	 * The resource set containing a light representation of models and their dependencies.
+	 */
 	private final ResourceSet set;
 
+	/**
+	 * Cross referencer adapter used to retrieve cross resource references.
+	 */
 	private final ECrossReferenceAdapter xRef;
 
+	/**
+	 * Create a new instance.
+	 * 
+	 * @param resourceSet
+	 *            resource set providing a light image of models and their dependencies (see
+	 *            {@link WorkspaceModelDependenciesSynchronizer}.
+	 */
 	public CrossResourceDependencies(ResourceSet resourceSet) {
 		this.set = resourceSet;
 		this.xRef = new ECrossReferenceAdapter();
 		this.set.eAdapters().add(xRef);
 	}
 
+	/**
+	 * This method returns the list of files having at least one reference on one of the given files.
+	 * 
+	 * @param roots
+	 *            the files you want to get inverse reference from.
+	 * @return the list of files referencing the roots you gave.
+	 */
 	public Iterable<IFile> getInverseReferences(Iterable<IFile> roots) {
 		final Set<Resource> dependantEmfResources = Sets.newLinkedHashSet();
 		for (final IFile iFile : roots) {
@@ -74,6 +98,13 @@ public class CrossResourceDependencies {
 				Predicates.notNull());
 	}
 
+	/**
+	 * This method returns the list of files referenced by at least one of the given files.
+	 * 
+	 * @param roots
+	 *            originating files.
+	 * @return the list of files referenced by the roots ones.
+	 */
 	public Iterable<IFile> getDependencies(Set<IFile> roots) {
 		final Set<Resource> dependantEmfResources = Sets.newLinkedHashSet();
 		for (final IFile iFile : roots) {
@@ -87,17 +118,13 @@ public class CrossResourceDependencies {
 			for (final Dependency dep : model.getDependencies()) {
 				if (dep.getTarget().eResource() != null) {
 					dependantEmfResources.add(dep.getTarget().eResource());
-					// TODO find a way to show/discriminate non resolvable dependencies
+					// TODO find a way to show/discriminate non resolvable dependencies ?
 				}
 			}
 
 		}
 		return Iterables.filter(Iterables.transform(dependantEmfResources, ERESOURCE_TO_IFILE),
 				Predicates.notNull());
-	}
-
-	public ResourceSet getResourceSet() {
-		return set;
 	}
 
 }

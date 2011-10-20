@@ -11,6 +11,7 @@
 package org.eclipse.emf.compare.logical.workspace.internal;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceFactoryImpl;
 
 /**
@@ -22,8 +23,8 @@ import org.eclipse.emf.ecore.resource.impl.ResourceFactoryImpl;
 public class DependencyResourceFactory extends ResourceFactoryImpl {
 
 	@Override
-	public DependencyResource createResource(URI uri) {
-		return new XMIHrefLookAheadResourceImpl(uri);
+	public Resource createResource(URI uri) {
+		return new DependenciesResourceImpl(uri);
 	}
 
 }

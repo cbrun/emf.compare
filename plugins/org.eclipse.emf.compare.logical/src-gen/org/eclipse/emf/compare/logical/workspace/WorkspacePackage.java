@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace;
 
+import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
@@ -24,44 +25,42 @@ import org.eclipse.emf.ecore.EReference;
  * <li>and each data type</li>
  * </ul>
  * <!-- end-user-doc -->
- * 
  * @see org.eclipse.emf.compare.logical.workspace.WorkspaceFactory
  * @model kind="package"
  * @generated
  */
 public interface WorkspacePackage extends EPackage {
 	/**
-	 * The package name. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The package name.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @generated
 	 */
 	String eNAME = "workspace";
 
 	/**
-	 * The package namespace URI. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The package namespace URI.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @generated
 	 */
 	String eNS_URI = "http://www.eclipse.org/emf/compare/workspace";
 
 	/**
-	 * The package namespace name. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The package namespace name.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @generated
 	 */
 	String eNS_PREFIX = "workspace";
 
 	/**
-	 * The singleton instance of the package. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The singleton instance of the package.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @generated
 	 */
 	WorkspacePackage eINSTANCE = org.eclipse.emf.compare.logical.workspace.impl.WorkspacePackageImpl.init();
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.emf.compare.logical.workspace.impl.ModelImpl
-	 * <em>Model</em>}' class. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The meta object id for the '{@link org.eclipse.emf.compare.logical.workspace.impl.ModelImpl <em>Model</em>}' class.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @see org.eclipse.emf.compare.logical.workspace.impl.ModelImpl
 	 * @see org.eclipse.emf.compare.logical.workspace.impl.WorkspacePackageImpl#getModel()
 	 * @generated
@@ -69,27 +68,35 @@ public interface WorkspacePackage extends EPackage {
 	int MODEL = 0;
 
 	/**
-	 * The feature id for the '<em><b>Dependencies</b></em>' containment reference list. <!-- begin-user-doc
+	 * The feature id for the '<em><b>Dependencies</b></em>' containment reference list.
+	 * <!-- begin-user-doc
 	 * --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 * @ordered
 	 */
 	int MODEL__DEPENDENCIES = 0;
 
 	/**
-	 * The number of structural features of the '<em>Model</em>' class. <!-- begin-user-doc --> <!--
-	 * end-user-doc -->
-	 * 
+	 * The feature id for the '<em><b>Loadable</b></em>' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
 	 * @generated
 	 * @ordered
 	 */
-	int MODEL_FEATURE_COUNT = 1;
+	int MODEL__LOADABLE = 1;
 
 	/**
-	 * The meta object id for the '{@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl
-	 * <em>Dependency</em>}' class. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * The number of structural features of the '<em>Model</em>' class.
+	 * <!-- begin-user-doc --> <!--
+	 * end-user-doc -->
+	 * @generated
+	 * @ordered
+	 */
+	int MODEL_FEATURE_COUNT = 2;
+
+	/**
+	 * The meta object id for the '{@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl <em>Dependency</em>}' class.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @see org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl
 	 * @see org.eclipse.emf.compare.logical.workspace.impl.WorkspacePackageImpl#getDependency()
 	 * @generated
@@ -106,27 +113,26 @@ public interface WorkspacePackage extends EPackage {
 	int DEPENDENCY__TARGET = 0;
 
 	/**
-	 * The feature id for the '<em><b>Source</b></em>' container reference. <!-- begin-user-doc --> <!--
+	 * The feature id for the '<em><b>Source</b></em>' container reference.
+	 * <!-- begin-user-doc --> <!--
 	 * end-user-doc -->
-	 * 
 	 * @generated
 	 * @ordered
 	 */
 	int DEPENDENCY__SOURCE = 1;
 
 	/**
-	 * The number of structural features of the '<em>Dependency</em>' class. <!-- begin-user-doc --> <!--
+	 * The number of structural features of the '<em>Dependency</em>' class.
+	 * <!-- begin-user-doc --> <!--
 	 * end-user-doc -->
-	 * 
 	 * @generated
 	 * @ordered
 	 */
 	int DEPENDENCY_FEATURE_COUNT = 2;
 
 	/**
-	 * Returns the meta object for class '{@link org.eclipse.emf.compare.logical.workspace.Model
-	 * <em>Model</em>}'. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * Returns the meta object for class '{@link org.eclipse.emf.compare.logical.workspace.Model <em>Model</em>}'.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @return the meta object for class '<em>Model</em>'.
 	 * @see org.eclipse.emf.compare.logical.workspace.Model
 	 * @generated
@@ -146,9 +152,19 @@ public interface WorkspacePackage extends EPackage {
 	EReference getModel_Dependencies();
 
 	/**
-	 * Returns the meta object for class '{@link org.eclipse.emf.compare.logical.workspace.Dependency
-	 * <em>Dependency</em>}'. <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
+	 * Returns the meta object for the attribute '{@link org.eclipse.emf.compare.logical.workspace.Model#isLoadable <em>Loadable</em>}'.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @return the meta object for the attribute '<em>Loadable</em>'.
+	 * @see org.eclipse.emf.compare.logical.workspace.Model#isLoadable()
+	 * @see #getModel()
+	 * @generated
+	 */
+	EAttribute getModel_Loadable();
+
+	/**
+	 * Returns the meta object for class '{@link org.eclipse.emf.compare.logical.workspace.Dependency <em>Dependency</em>}'.
+	 * <!-- begin-user-doc --> <!-- end-user-doc -->
 	 * @return the meta object for class '<em>Dependency</em>'.
 	 * @see org.eclipse.emf.compare.logical.workspace.Dependency
 	 * @generated
@@ -197,14 +213,12 @@ public interface WorkspacePackage extends EPackage {
 	 * <li>and each data type</li>
 	 * </ul>
 	 * <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	interface Literals {
 		/**
-		 * The meta object literal for the '{@link org.eclipse.emf.compare.logical.workspace.impl.ModelImpl
-		 * <em>Model</em>}' class. <!-- begin-user-doc --> <!-- end-user-doc -->
-		 * 
+		 * The meta object literal for the '{@link org.eclipse.emf.compare.logical.workspace.impl.ModelImpl <em>Model</em>}' class.
+		 * <!-- begin-user-doc --> <!-- end-user-doc -->
 		 * @see org.eclipse.emf.compare.logical.workspace.impl.ModelImpl
 		 * @see org.eclipse.emf.compare.logical.workspace.impl.WorkspacePackageImpl#getModel()
 		 * @generated
@@ -214,16 +228,21 @@ public interface WorkspacePackage extends EPackage {
 		/**
 		 * The meta object literal for the '<em><b>Dependencies</b></em>' containment reference list feature.
 		 * <!-- begin-user-doc --> <!-- end-user-doc -->
-		 * 
 		 * @generated
 		 */
 		EReference MODEL__DEPENDENCIES = eINSTANCE.getModel_Dependencies();
 
 		/**
-		 * The meta object literal for the '
-		 * {@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl <em>Dependency</em>}' class.
+		 * The meta object literal for the '<em><b>Loadable</b></em>' attribute feature.
+		 * <!-- begin-user-doc -->
+		 * <!-- end-user-doc -->
+		 * @generated
+		 */
+		EAttribute MODEL__LOADABLE = eINSTANCE.getModel_Loadable();
+
+		/**
+		 * The meta object literal for the '{@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl <em>Dependency</em>}' class.
 		 * <!-- begin-user-doc --> <!-- end-user-doc -->
-		 * 
 		 * @see org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl
 		 * @see org.eclipse.emf.compare.logical.workspace.impl.WorkspacePackageImpl#getDependency()
 		 * @generated
@@ -231,9 +250,9 @@ public interface WorkspacePackage extends EPackage {
 		EClass DEPENDENCY = eINSTANCE.getDependency();
 
 		/**
-		 * The meta object literal for the '<em><b>Target</b></em>' reference feature. <!-- begin-user-doc -->
+		 * The meta object literal for the '<em><b>Target</b></em>' reference feature.
+		 * <!-- begin-user-doc -->
 		 * <!-- end-user-doc -->
-		 * 
 		 * @generated
 		 */
 		EReference DEPENDENCY__TARGET = eINSTANCE.getDependency_Target();

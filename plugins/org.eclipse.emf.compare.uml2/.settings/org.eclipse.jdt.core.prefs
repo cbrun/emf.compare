@@ -1,4 +1,4 @@
-#Mon Oct 10 10:42:02 CEST 2011
+#Thu Oct 20 10:42:04 CEST 2011
 eclipse.preferences.version=1
 org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode=enabled
 org.eclipse.jdt.core.compiler.codegen.targetPlatform=1.5
@@ -148,7 +148,7 @@ org.eclipse.jdt.core.formatter.insert_space_after_ellipsis=insert
 org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_parameterized_type_reference=do not insert
 org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_type_arguments=do not insert
 org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_type_parameters=do not insert
-org.eclipse.jdt.core.formatter.insert_space_after_opening_brace_in_array_initializer=insert
+org.eclipse.jdt.core.formatter.insert_space_after_opening_brace_in_array_initializer=do not insert
 org.eclipse.jdt.core.formatter.insert_space_after_opening_bracket_in_array_allocation_expression=do not insert
 org.eclipse.jdt.core.formatter.insert_space_after_opening_bracket_in_array_reference=do not insert
 org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_annotation=do not insert
@@ -177,7 +177,7 @@ org.eclipse.jdt.core.formatter.insert_space_before_binary_operator=insert
 org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_parameterized_type_reference=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_type_arguments=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_type_parameters=do not insert
-org.eclipse.jdt.core.formatter.insert_space_before_closing_brace_in_array_initializer=insert
+org.eclipse.jdt.core.formatter.insert_space_before_closing_brace_in_array_initializer=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_closing_bracket_in_array_allocation_expression=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_closing_bracket_in_array_reference=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_annotation=do not insert
@@ -246,7 +246,7 @@ org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_decla
 org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_invocation=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_parenthesized_expression=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_switch=insert
-org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_synchronized=insert
+org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_synchronized=do not insert
 org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_while=insert
 org.eclipse.jdt.core.formatter.insert_space_before_parenthesized_expression_in_return=insert
 org.eclipse.jdt.core.formatter.insert_space_before_parenthesized_expression_in_throw=insert

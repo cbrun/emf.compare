@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.model;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -147,7 +150,7 @@ public class EMFResourceMapping extends ResourceMapping {
 			if (context instanceof RemoteResourceMappingContext) {
 				final RemoteResourceMappingContext remoteContext = (RemoteResourceMappingContext)context;
 
-				for (final Resource eResource : localResourceSet.getResources()) {
+				for (final Resource eResource : resourcesInWorkspace()) {
 					final IFile localFile;
 					if (eResource == emfResource) {
 						localFile = physicalFile;
@@ -203,7 +206,21 @@ public class EMFResourceMapping extends ResourceMapping {
 				iResourcesInScope.toArray(new IResource[iResourcesInScope.size()]), IResource.DEPTH_ONE,
 				IResource.NONE);
 
-		return new ResourceTraversal[] {traversal,};
+		return new ResourceTraversal[] {traversal};
+	}
+
+	/**
+	 * return the list of resources which are mapping a workspace file.
+	 * 
+	 * @return the list of resources which are mapping a workspace file
+	 */
+	private Iterable<Resource> resourcesInWorkspace() {
+		return Iterables.filter(localResourceSet.getResources(), new Predicate<Resource>() {
+
+			public boolean apply(Resource arg0) {
+				return arg0.getURI() != null && arg0.getURI().isPlatformResource();
+			}
+		});
 	}
 
 	/**
@@ -268,7 +285,7 @@ public class EMFResourceMapping extends ResourceMapping {
 
 		iResourcesInScope = new LinkedHashSet<IResource>();
 
-		for (final Resource eResource : localResourceSet.getResources()) {
+		for (final Resource eResource : resourcesInWorkspace()) {
 			if (eResource == emfResource) {
 				iResourcesInScope.add(physicalFile);
 			} else {

@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.common.util.WrappedException;
 import org.eclipse.emf.compare.logical.workspace.Dependency;
 import org.eclipse.emf.compare.logical.workspace.Model;
 import org.eclipse.emf.compare.logical.workspace.WorkspaceFactory;
@@ -31,12 +32,16 @@ import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 /**
  * A {@link DependencyResource} implementation specific to XMI. It is parsing the xmi input looking for
  * external references but not actually loading the model. It is way faster than
- * {@link DelegatingHrefLookAheadResourceImpl} but only works in case of XMI resources.
+ * {@link DependenciesResourceImpl} but only works in case of XMI resources.
  * 
  * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
  */
-public class XMIHrefLookAheadResourceImpl extends ResourceImpl implements DependencyResource {
+public class XMIDependenciesResourceImpl extends ResourceImpl {
+	/**
+	 * the loading buffer size.
+	 */
+	private static final int BUFFER_SIZE = 0x10000;
 
 	/**
 	 * Create a new resource.
@@ -44,21 +49,25 @@ public class XMIHrefLookAheadResourceImpl extends ResourceImpl implements Depend
 	 * @param uri
 	 *            uri to use to create the resource.
 	 */
-	public XMIHrefLookAheadResourceImpl(URI uri) {
+	public XMIDependenciesResourceImpl(URI uri) {
 		super(uri);
 	}
 
 	@Override
 	protected void doLoad(InputStream is, Map<?, ?> options) throws IOException {
-		final Set<String> foundDependencies = collectDependencies(is);
-
 		final Model root = WorkspaceFactory.eINSTANCE.createModel();
 		getContents().add(root);
 
-		for (final String uri : foundDependencies) {
-			final Dependency newDep = WorkspaceFactory.eINSTANCE.createDependency();
-			newDep.setTarget(forgeProxy(uri));
-			root.getDependencies().add(newDep);
+		try {
+			final Set<String> foundDependencies = collectDependencies(is);
+
+			for (final String uri : foundDependencies) {
+				final Dependency newDep = WorkspaceFactory.eINSTANCE.createDependency();
+				newDep.setTarget(forgeProxy(uri));
+				root.getDependencies().add(newDep);
+			}
+		} catch (WrappedException e) {
+			root.setLoadable(false);
 		}
 
 	}
@@ -79,7 +88,7 @@ public class XMIHrefLookAheadResourceImpl extends ResourceImpl implements Depend
 
 		// a depedency looks like this : href="SimpleMM1I%20/my/othernstance2.xmi#/
 
-		final char[] buffer = new char[0x10000];
+		final char[] buffer = new char[BUFFER_SIZE];
 		final StringBuilder out = new StringBuilder();
 		// TODO find the encoding...
 		final Reader in = new InputStreamReader(is, "UTF-8"); //$NON-NLS-1$

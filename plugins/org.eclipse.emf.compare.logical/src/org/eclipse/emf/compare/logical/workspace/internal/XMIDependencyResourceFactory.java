@@ -10,15 +10,21 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace.internal;
 
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.impl.ResourceFactoryImpl;
 
 /**
- * A DependecyResource is a coarse grain EMF Resource implementation providing dependencies links from an
- * actual resource.
+ * A resource factory instantiating DependencyResources.
  * 
  * @author <a href="mailto:cedric.brun@obeo.fr">Cedric Brun</a>
  * @since 1.3
  */
-public interface DependencyResource extends Resource {
+public class XMIDependencyResourceFactory extends ResourceFactoryImpl {
+
+	@Override
+	public Resource createResource(URI uri) {
+		return new XMIDependenciesResourceImpl(uri);
+	}
 
 }

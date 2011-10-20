@@ -27,18 +27,18 @@ import org.eclipse.emf.ecore.util.EcoreUtil;
  * <p>
  * The following features are implemented:
  * <ul>
- * <li>{@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl#getTarget <em>Target</em>}</li>
- * <li>{@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl#getSource <em>Source</em>}</li>
+ *   <li>{@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl#getTarget <em>Target</em>}</li>
+ *   <li>{@link org.eclipse.emf.compare.logical.workspace.impl.DependencyImpl#getSource <em>Source</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @generated
  */
 public class DependencyImpl extends EObjectImpl implements Dependency {
 	/**
-	 * The cached value of the '{@link #getTarget() <em>Target</em>}' reference. <!-- begin-user-doc --> <!--
+	 * The cached value of the '{@link #getTarget() <em>Target</em>}' reference.
+	 * <!-- begin-user-doc --> <!--
 	 * end-user-doc -->
-	 * 
 	 * @see #getTarget()
 	 * @generated
 	 * @ordered
@@ -47,7 +47,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	protected DependencyImpl() {
@@ -56,7 +55,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override
@@ -66,7 +64,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	public Model getTarget() {
@@ -75,8 +72,7 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 			target = (Model)eResolveProxy(oldTarget);
 			if (target != oldTarget) {
 				if (eNotificationRequired())
-					eNotify(new ENotificationImpl(this, Notification.RESOLVE,
-							WorkspacePackage.DEPENDENCY__TARGET, oldTarget, target));
+					eNotify(new ENotificationImpl(this, Notification.RESOLVE, WorkspacePackage.DEPENDENCY__TARGET, oldTarget, target));
 			}
 		}
 		return target;
@@ -84,7 +80,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	public Model basicGetTarget() {
@@ -93,31 +88,26 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	public void setTarget(Model newTarget) {
 		Model oldTarget = target;
 		target = newTarget;
 		if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, WorkspacePackage.DEPENDENCY__TARGET,
-					oldTarget, target));
+			eNotify(new ENotificationImpl(this, Notification.SET, WorkspacePackage.DEPENDENCY__TARGET, oldTarget, target));
 	}
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	public Model getSource() {
-		if (eContainerFeatureID() != WorkspacePackage.DEPENDENCY__SOURCE)
-			return null;
+		if (eContainerFeatureID() != WorkspacePackage.DEPENDENCY__SOURCE) return null;
 		return (Model)eContainer();
 	}
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	public NotificationChain basicSetSource(Model newSource, NotificationChain msgs) {
@@ -127,31 +117,26 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	public void setSource(Model newSource) {
-		if (newSource != eInternalContainer() || eContainerFeatureID() != WorkspacePackage.DEPENDENCY__SOURCE
-				&& newSource != null) {
+		if (newSource != eInternalContainer() || (eContainerFeatureID() != WorkspacePackage.DEPENDENCY__SOURCE && newSource != null)) {
 			if (EcoreUtil.isAncestor(this, newSource))
 				throw new IllegalArgumentException("Recursive containment not allowed for " + toString());
 			NotificationChain msgs = null;
 			if (eInternalContainer() != null)
 				msgs = eBasicRemoveFromContainer(msgs);
 			if (newSource != null)
-				msgs = ((InternalEObject)newSource).eInverseAdd(this, WorkspacePackage.MODEL__DEPENDENCIES,
-						Model.class, msgs);
+				msgs = ((InternalEObject)newSource).eInverseAdd(this, WorkspacePackage.MODEL__DEPENDENCIES, Model.class, msgs);
 			msgs = basicSetSource(newSource, msgs);
-			if (msgs != null)
-				msgs.dispatch();
-		} else if (eNotificationRequired())
-			eNotify(new ENotificationImpl(this, Notification.SET, WorkspacePackage.DEPENDENCY__SOURCE,
-					newSource, newSource));
+			if (msgs != null) msgs.dispatch();
+		}
+		else if (eNotificationRequired())
+			eNotify(new ENotificationImpl(this, Notification.SET, WorkspacePackage.DEPENDENCY__SOURCE, newSource, newSource));
 	}
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override
@@ -167,7 +152,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override
@@ -181,30 +165,26 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override
 	public NotificationChain eBasicRemoveFromContainerFeature(NotificationChain msgs) {
 		switch (eContainerFeatureID()) {
 			case WorkspacePackage.DEPENDENCY__SOURCE:
-				return eInternalContainer().eInverseRemove(this, WorkspacePackage.MODEL__DEPENDENCIES,
-						Model.class, msgs);
+				return eInternalContainer().eInverseRemove(this, WorkspacePackage.MODEL__DEPENDENCIES, Model.class, msgs);
 		}
 		return super.eBasicRemoveFromContainerFeature(msgs);
 	}
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override
 	public Object eGet(int featureID, boolean resolve, boolean coreType) {
 		switch (featureID) {
 			case WorkspacePackage.DEPENDENCY__TARGET:
-				if (resolve)
-					return getTarget();
+				if (resolve) return getTarget();
 				return basicGetTarget();
 			case WorkspacePackage.DEPENDENCY__SOURCE:
 				return getSource();
@@ -214,7 +194,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override
@@ -232,7 +211,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override
@@ -250,7 +228,6 @@ public class DependencyImpl extends EObjectImpl implements Dependency {
 
 	/**
 	 * <!-- begin-user-doc --> <!-- end-user-doc -->
-	 * 
 	 * @generated
 	 */
 	@Override

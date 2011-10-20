@@ -10,21 +10,37 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.extension;
 
+import com.google.common.collect.Sets;
+
+import java.util.Set;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.compare.logical.EMFCompareLogicalPlugin;
 import org.eclipse.emf.compare.logical.workspace.CrossResourceDependencies;
-import org.eclipse.emf.compare.logical.workspace.WorkspaceModelCollector;
+import org.eclipse.emf.compare.logical.workspace.WorkspaceModelDependenciesSynchronizer;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 
-import com.google.common.collect.Sets;
-
+/**
+ * an {@link IModelResolver} implementation relying on workspace indexing and listening to make sure
+ * subsequent calls to resolve cross model dependencies are efficients. The first call will trigger a
+ * workspace indexing and as such might take quite long. Subsequent calls should be pretty much instantaneous.
+ * Any file matching the @org.eclipse.emf.ecore@ or @org.eclipse.emf.ecore.xmi@ content type will be indexed.
+ * 
+ * @author <a href="mailto:cedric.brun@obeo.fr">Cedric Brun</a>
+ */
 public class ModelCrossReferencesResolver implements IModelResolver {
+	/**
+	 * The cross resources dependencies.
+	 */
+	private CrossResourceDependencies deps;
 
-	private CrossResourceDependencies deps = null;
-
+	/**
+	 * {@inheritDoc}
+	 */
 	public void resolve(IFile iFile, Resource eResource, IProgressMonitor monitor) {
 		/*
 		 * We'll search in the scope of the whole workspace
@@ -32,26 +48,34 @@ public class ModelCrossReferencesResolver implements IModelResolver {
 
 		if (iFile.getProject() != null && iFile.getProject().getWorkspace() != null
 				&& iFile.getProject().getWorkspace().getRoot() != null) {
-			final WorkspaceModelCollector collector = new WorkspaceModelCollector(Sets.newHashSet("xmi",
-					"ecore", "odesign", "aird", "genmodel", "uml"));
+			final WorkspaceModelDependenciesSynchronizer collector = new WorkspaceModelDependenciesSynchronizer(
+					getContentTypes());
 			if (deps == null) {
 				try {
 					deps = collector.crawl(monitor);
 					collector.listen();
 				} catch (CoreException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					EMFCompareLogicalPlugin.getDefault().getLog().log(e.getStatus());
 				}
 			}
-			ResourceSet baseResourceSet = eResource.getResourceSet();
-			Iterable<IFile> modelsIDependOn = deps.getDependencies(Sets.newHashSet(iFile));
+			final ResourceSet baseResourceSet = eResource.getResourceSet();
+			final Iterable<IFile> modelsIDependOn = deps.getDependencies(Sets.newHashSet(iFile));
 			for (IFile xRef : modelsIDependOn) {
-				URI xRefURI = URI.createPlatformResourceURI(xRef.getFullPath().toString(), false);
+				final URI xRefURI = URI.createPlatformResourceURI(xRef.getFullPath().toString(), false);
 				baseResourceSet.getResource(xRefURI, true);
 
 			}
 
 		}
 
+	}
+
+	/**
+	 * This method is usefull if you want to change the list of content type which are indexed by default.
+	 * 
+	 * @return the list of content types to consider.
+	 */
+	protected Set<String> getContentTypes() {
+		return Sets.newHashSet("org.eclipse.emf.ecore", "org.eclipse.emf.ecore.xmi");
 	}
 }

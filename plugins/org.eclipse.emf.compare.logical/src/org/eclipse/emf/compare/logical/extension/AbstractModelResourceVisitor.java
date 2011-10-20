@@ -12,39 +12,44 @@ package org.eclipse.emf.compare.logical.extension;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.core.runtime.content.IContentTypeManager;
-import org.eclipse.emf.compare.util.EclipseModelUtils;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 
 /**
- * This implementation of a resource visitor will allow us to browse all models in a given hierarchy.
+ * This implementation of a resource visitor will allow us to browse all models in a given hierarchy and do
+ * something on them. The "do something" part has to be done in a specialization of the processModel method.
  * 
  * @author <a href="mailto:laurent.goubet@obeo.fr">Laurent Goubet</a>
  */
-public class ModelResourceVisitor implements IResourceVisitor {
-	/** Content types of the files to consider as potential parents. */
-	private static final String[] MODEL_CONTENT_TYPES = new String[] {
-			"org.eclipse.emf.compare.ui.contenttype.ModelContentType", "org.eclipse.emf.ecore", //$NON-NLS-1$ //$NON-NLS-2$
-			"org.eclipse.emf.ecore.xmi",}; //$NON-NLS-1$
+public abstract class AbstractModelResourceVisitor implements IResourceVisitor {
 
-	/** Resource Set in which we should load the temporary resources. */
-	private final ResourceSet set;
+	/** Content types of the files to consider as potential parents. */
+	private final Set<String> contentTypesToConsider;
+
+	/**
+	 * progress monitor to check cancel from the user.
+	 */
+	private IProgressMonitor monitor;
 
 	/**
 	 * Instantiates a resource visitor given the ResourceSet in which to load the temporary resources.
 	 * 
-	 * @param resourceSet
-	 *            ResourceSet in which to load the temporary resources.
+	 * @param contentTypes
+	 *            : the list of content-type id's to process.
+	 * @param pm
+	 *            : a progress monitor to check cancellation of the end user.
 	 */
-	public ModelResourceVisitor(ResourceSet resourceSet) {
-		this.set = resourceSet;
+	public AbstractModelResourceVisitor(Set<String> contentTypes, IProgressMonitor pm) {
+		this.contentTypesToConsider = contentTypes;
+		this.monitor = pm;
 	}
 
 	/**
@@ -56,24 +61,27 @@ public class ModelResourceVisitor implements IResourceVisitor {
 		if (resource instanceof IFile) {
 			final IFile file = (IFile)resource;
 			boolean isModel = false;
-			for (String contentType : MODEL_CONTENT_TYPES) {
+			for (String contentType : contentTypesToConsider) {
 				if (hasContentType(file, contentType)) {
 					isModel = true;
 				}
 			}
 
 			if (isModel) {
-				try {
-					EclipseModelUtils.getResource(file, set);
-					return true;
-				} catch (IOException e) {
-					// will return false;
-				}
+				processModel(file);
 			}
 			return false;
 		}
-		return true;
+		return !monitor.isCanceled();
 	}
+
+	/**
+	 * Process the model.
+	 * 
+	 * @param file
+	 *            a file from the workspace matching at least one of the given the content types.
+	 */
+	protected abstract void processModel(final IFile file);
 
 	/**
 	 * This will return <code>true</code> if and only if the given IFile has the given <em>contentTypeId</em>
@@ -86,7 +94,7 @@ public class ModelResourceVisitor implements IResourceVisitor {
 	 *            Fully qualified identifier of the content type this <em>resource</em> has to feature.
 	 * @return <code>true</code> if the given {@link IFile} has the given content type.
 	 */
-	private boolean hasContentType(IFile resource, String contentTypeId) {
+	public static boolean hasContentType(IFile resource, String contentTypeId) {
 		final IContentTypeManager ctManager = Platform.getContentTypeManager();
 		final IContentType expected = ctManager.getContentType(contentTypeId);
 		if (expected == null) {

@@ -10,6 +10,13 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace.internal;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -20,22 +27,17 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.common.util.WrappedException;
 import org.eclipse.emf.compare.logical.workspace.Dependency;
 import org.eclipse.emf.compare.logical.workspace.Model;
 import org.eclipse.emf.compare.logical.workspace.WorkspaceFactory;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.InternalEObject;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
-
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 /**
  * A {@link DependencyResource} implemented by loading the model behind the scene (not resolving proxies) and
@@ -45,7 +47,7 @@ import com.google.common.collect.Sets;
  * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
  */
-public class DelegatingHrefLookAheadResourceImpl extends ResourceImpl implements DependencyResource {
+public class DependenciesResourceImpl extends ResourceImpl {
 	/**
 	 * Predicate returning true if the EObject is a proxy.
 	 */
@@ -88,7 +90,7 @@ public class DelegatingHrefLookAheadResourceImpl extends ResourceImpl implements
 	 * @param uri
 	 *            uri to use to create the resource.
 	 */
-	public DelegatingHrefLookAheadResourceImpl(URI uri) {
+	public DependenciesResourceImpl(URI uri) {
 		super(uri);
 	}
 
@@ -98,23 +100,38 @@ public class DelegatingHrefLookAheadResourceImpl extends ResourceImpl implements
 		final Model root = WorkspaceFactory.eINSTANCE.createModel();
 		getContents().add(root);
 
+		/*
+		 * FIXME : we should use the proper resource factory here.
+		 */
+		final XMIResourceImpl xmiRes = new XMIResourceImpl(uri);
+		xmiRes.load(options);
+
 		try {
-			final XMIResourceImpl xmiRes = new XMIResourceImpl(uri);
-			xmiRes.load(options);
 			final Set<String> foundDependencies = collectDependencies(xmiRes);
-			for (final String dependencyURI : foundDependencies) {
+
+			for (final String uri : foundDependencies) {
 				final Dependency newDep = WorkspaceFactory.eINSTANCE.createDependency();
-				newDep.setTarget(forgeProxy(dependencyURI));
+				newDep.setTarget(forgeProxy(uri));
 				root.getDependencies().add(newDep);
 			}
-		} catch (final Throwable e) {
-			// TODO add packages info
+		} catch (WrappedException e) {
+			root.setLoadable(false);
 		}
 
 	}
 
-	private Set<String> collectDependencies(XMIResourceImpl xmiRes) throws UnsupportedEncodingException,
-			IOException {
+	/**
+	 * Collect the cross resources dependencies from an XMIResource.
+	 * 
+	 * @param xmiRes
+	 *            resource to process.
+	 * @return the list of resource URI which the given resource depend on.
+	 * @throws UnsupportedEncodingException
+	 *             if the encoding is not supported
+	 * @throws IOException
+	 *             on error accessing the file.
+	 */
+	private Set<String> collectDependencies(Resource xmiRes) throws UnsupportedEncodingException, IOException {
 		final Set<String> foundDependencies = Sets.newLinkedHashSet();
 		final Iterator<EObject> it = EcoreUtil.getAllProperContents(xmiRes, false);
 
@@ -128,6 +145,13 @@ public class DelegatingHrefLookAheadResourceImpl extends ResourceImpl implements
 		return foundDependencies;
 	}
 
+	/**
+	 * Method returning all the referenced objects which should be considered for the cross referencing.
+	 * 
+	 * @param from
+	 *            the source object.
+	 * @return all the referenced objects which should be cross referenced.
+	 */
 	private Collection<EObject> allRefs(EObject from) {
 		final List<EObject> referencedObjects = Lists.newArrayList();
 

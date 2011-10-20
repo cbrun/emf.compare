@@ -15,29 +15,30 @@ import org.eclipse.emf.ecore.EObject;
 
 /**
  * <!-- begin-user-doc --> A representation of the model object '<em><b>Model</b></em>'. <!-- end-user-doc -->
+ *
  * <p>
  * The following features are supported:
  * <ul>
- * <li>{@link org.eclipse.emf.compare.logical.workspace.Model#getDependencies <em>Dependencies</em>}</li>
+ *   <li>{@link org.eclipse.emf.compare.logical.workspace.Model#getDependencies <em>Dependencies</em>}</li>
+ *   <li>{@link org.eclipse.emf.compare.logical.workspace.Model#isLoadable <em>Loadable</em>}</li>
  * </ul>
  * </p>
- * 
+ *
  * @see org.eclipse.emf.compare.logical.workspace.WorkspacePackage#getModel()
  * @model
  * @generated
  */
 public interface Model extends EObject {
 	/**
-	 * Returns the value of the '<em><b>Dependencies</b></em>' containment reference list. The list contents
-	 * are of type {@link org.eclipse.emf.compare.logical.workspace.Dependency}. It is bidirectional and its
-	 * opposite is '{@link org.eclipse.emf.compare.logical.workspace.Dependency#getSource <em>Source</em>}'.
+	 * Returns the value of the '<em><b>Dependencies</b></em>' containment reference list.
+	 * The list contents are of type {@link org.eclipse.emf.compare.logical.workspace.Dependency}.
+	 * It is bidirectional and its opposite is '{@link org.eclipse.emf.compare.logical.workspace.Dependency#getSource <em>Source</em>}'.
 	 * <!-- begin-user-doc -->
 	 * <p>
 	 * If the meaning of the '<em>Dependencies</em>' containment reference list isn't clear, there really
 	 * should be more of a description here...
 	 * </p>
 	 * <!-- end-user-doc -->
-	 * 
 	 * @return the value of the '<em>Dependencies</em>' containment reference list.
 	 * @see org.eclipse.emf.compare.logical.workspace.WorkspacePackage#getModel_Dependencies()
 	 * @see org.eclipse.emf.compare.logical.workspace.Dependency#getSource
@@ -45,5 +46,32 @@ public interface Model extends EObject {
 	 * @generated
 	 */
 	EList<Dependency> getDependencies();
+
+	/**
+	 * Returns the value of the '<em><b>Loadable</b></em>' attribute.
+	 * The default value is <code>"true"</code>.
+	 * <!-- begin-user-doc -->
+	 * <p>
+	 * If the meaning of the '<em>Loadable</em>' attribute isn't clear,
+	 * there really should be more of a description here...
+	 * </p>
+	 * <!-- end-user-doc -->
+	 * @return the value of the '<em>Loadable</em>' attribute.
+	 * @see #setLoadable(boolean)
+	 * @see org.eclipse.emf.compare.logical.workspace.WorkspacePackage#getModel_Loadable()
+	 * @model default="true"
+	 * @generated
+	 */
+	boolean isLoadable();
+
+	/**
+	 * Sets the value of the '{@link org.eclipse.emf.compare.logical.workspace.Model#isLoadable <em>Loadable</em>}' attribute.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @param value the new value of the '<em>Loadable</em>' attribute.
+	 * @see #isLoadable()
+	 * @generated
+	 */
+	void setLoadable(boolean value);
 
 } // Model

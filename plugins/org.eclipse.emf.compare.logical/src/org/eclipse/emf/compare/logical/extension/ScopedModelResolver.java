@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.extension;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -20,6 +21,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.compare.util.EclipseModelUtils;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -52,7 +54,19 @@ public class ScopedModelResolver implements IModelResolver {
 
 		final IContainer container = getScope(iFile);
 		try {
-			container.accept(new ModelResourceVisitor(temporaryResourceSet));
+			container.accept(new AbstractModelResourceVisitor(com.google.common.collect.Sets.newHashSet(
+					"org.eclipse.emf.compare.ui.contenttype.ModelContentType", "org.eclipse.emf.ecore", //$NON-NLS-1$ //$NON-NLS-2$
+					"org.eclipse.emf.ecore.xmi"), monitor) {
+
+				@Override
+				protected void processModel(IFile file) {
+					try {
+						EclipseModelUtils.getResource(file, temporaryResourceSet);
+					} catch (IOException e) {
+						// will return false;
+					}
+				}
+			});
 		} catch (CoreException e) {
 			// FIXME log
 		}
