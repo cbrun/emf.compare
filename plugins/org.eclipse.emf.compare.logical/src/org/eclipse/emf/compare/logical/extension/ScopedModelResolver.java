@@ -12,6 +12,7 @@ package org.eclipse.emf.compare.logical.extension;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -56,7 +57,7 @@ public class ScopedModelResolver implements IModelResolver {
 		try {
 			container.accept(new AbstractModelResourceVisitor(com.google.common.collect.Sets.newHashSet(
 					"org.eclipse.emf.compare.ui.contenttype.ModelContentType", "org.eclipse.emf.ecore", //$NON-NLS-1$ //$NON-NLS-2$
-					"org.eclipse.emf.ecore.xmi"), monitor) {
+					"org.eclipse.emf.ecore.xmi"), Collections.EMPTY_SET, monitor) {
 
 				@Override
 				protected void processModel(IFile file) {

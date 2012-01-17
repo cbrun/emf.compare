@@ -35,9 +35,10 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
+import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil;
-import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 
 /**
  * A {@link DependencyResource} implemented by loading the model behind the scene (not resolving proxies) and
@@ -101,12 +102,11 @@ public class DependenciesResourceImpl extends ResourceImpl {
 		getContents().add(root);
 
 		/*
-		 * FIXME : we should use the proper resource factory here.
+		 * a resource set with the proper global registrations.
 		 */
-		final XMIResourceImpl xmiRes = new XMIResourceImpl(uri);
-		xmiRes.load(options);
-
+		final ResourceSet set = new ResourceSetImpl();
 		try {
+			final Resource xmiRes = set.getResource(uri, true);
 			final Set<String> foundDependencies = collectDependencies(xmiRes);
 
 			for (final String uri : foundDependencies) {
@@ -116,8 +116,28 @@ public class DependenciesResourceImpl extends ResourceImpl {
 			}
 		} catch (WrappedException e) {
 			root.setLoadable(false);
+			System.err.println(uri + " is not loadable");
+			e.printStackTrace();
+			// CHECKSTYLE:OFF
+		} catch (Exception e) {
+			// CHECKSTYLE:ON
+			/*
+			 * here its valid to catch any kind of exception. The model loading could fail for any reason, we
+			 * don't want this to lead to errors but we just want to identify the issue and mark it in the
+			 * model.
+			 */
+			root.setLoadable(false);
+			System.err.println(uri + " is not loadable");
+			e.printStackTrace();
 		}
+		/*
+		 * let's cleanup as some Resource implementation (like UML) do things on unload.
+		 */
 
+		for (Resource res : set.getResources()) {
+			res.unload();
+		}
+		set.getResources().clear();
 	}
 
 	/**

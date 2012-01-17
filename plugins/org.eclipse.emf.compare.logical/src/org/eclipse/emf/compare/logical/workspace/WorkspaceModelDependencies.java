@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.logical.workspace;
 
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,6 +34,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.compare.logical.EMFCompareLogicalPlugin;
 import org.eclipse.emf.compare.logical.extension.AbstractModelResourceVisitor;
+import org.eclipse.emf.compare.logical.workspace.internal.DependencyResourceFactory;
 import org.eclipse.emf.compare.logical.workspace.internal.XMIDependencyResourceFactory;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
@@ -43,22 +47,43 @@ import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
  * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
  */
-public class WorkspaceModelDependenciesSynchronizer {
+public class WorkspaceModelDependencies {
 	/**
 	 * resource set used to keep the data.
 	 */
 	private ResourceSet set;
 
 	/**
-	 * A fairly specific resource factory which will build instances of Model+Dependencies from any kind of
+	 * A fairly specific resource factory which will build instances of Model+Dependencies from an XMI based
 	 * resource.
 	 */
-	private final Resource.Factory factory = new XMIDependencyResourceFactory();
+	private final Resource.Factory xmiFactory = new XMIDependencyResourceFactory();
+
+	/**
+	 * A fairly specific resource factory which will build instances of Model+Dependencies from an XMI based
+	 * resource.
+	 */
+	private final Resource.Factory genericFactory = new DependencyResourceFactory();
 
 	/**
 	 * the content types to index and consider.
 	 */
-	private final Set<String> contentTypes;
+	private final Set<String> genericContentTypes = Sets.newLinkedHashSet();
+
+	/**
+	 * the content XMI specific content types.
+	 */
+	private final Set<String> xmiContentTypes = Sets.newLinkedHashSet();
+
+	/**
+	 * the file extension to index and consider using the generic loading mechanism.
+	 */
+	private final Set<String> genericFileExtensions = Sets.newLinkedHashSet();
+
+	/**
+	 * the file extension to index and consider using the XMI loading mechanism.
+	 */
+	private final Set<String> xmiFileExtensions = Sets.newLinkedHashSet();
 
 	/**
 	 * an image of the cross resource dependencies.
@@ -66,14 +91,60 @@ public class WorkspaceModelDependenciesSynchronizer {
 	private CrossResourceDependencies deps;
 
 	/**
-	 * Create a new instance.
-	 * 
-	 * @param contentTypesToConsider
-	 *            the list of content types to index and consider while crawling and listening to the
-	 *            workspace.
+	 * Create a new instance ready for settings.
 	 */
-	public WorkspaceModelDependenciesSynchronizer(Set<String> contentTypesToConsider) {
-		this.contentTypes = contentTypesToConsider;
+	public WorkspaceModelDependencies() {
+		this.set = new ResourceSetImpl();
+	}
+
+	/**
+	 * Tell the class to inspect files with the given file extension and consider those as XMI.
+	 * 
+	 * @param fileExtension
+	 *            file extension.
+	 * @return the current instance to chain commands.
+	 */
+	public WorkspaceModelDependencies extensionAsXMI(String fileExtension) {
+		xmiFileExtensions.add(fileExtension);
+		return this;
+	}
+
+	/**
+	 * Tell the class to inspect files with the given content type and consider those as XMI.
+	 * 
+	 * @param contentTypeID
+	 *            the content type id.
+	 * @return the current instance to chain commands.
+	 */
+	public WorkspaceModelDependencies contentTypeAsXMI(String contentTypeID) {
+		xmiContentTypes.add(contentTypeID);
+		return this;
+	}
+
+	/**
+	 * Tell the class to inspect files with the given file extension. If this file is an XMI you should
+	 * probably use the extensionAsXMI() method.
+	 * 
+	 * @param fileExtension
+	 *            file extension.
+	 * @return the current instance to chain commands.
+	 */
+	public WorkspaceModelDependencies extensionAsModel(String fileExtension) {
+		genericFileExtensions.add(fileExtension);
+		return this;
+	}
+
+	/**
+	 * Tell the class to inspect files with the given content type. If this file is an XMI you should probably
+	 * use the contentTypeAsXMI() method.
+	 * 
+	 * @param contentTypeID
+	 *            the content type id.
+	 * @return the current instance to chain commands.
+	 */
+	public WorkspaceModelDependencies contentTypeAsModel(String contentTypeID) {
+		genericContentTypes.add(contentTypeID);
+		return this;
 	}
 
 	/**
@@ -86,7 +157,7 @@ public class WorkspaceModelDependenciesSynchronizer {
 	private int getNumberOfFilesToCrawl() throws CoreException {
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		final IWorkspaceRoot root = workspace.getRoot();
-		final CountingVisitor counter = new CountingVisitor(contentTypes);
+		final CountingVisitor counter = new CountingVisitor();
 		root.accept(counter);
 		return counter.getCount();
 	}
@@ -104,12 +175,9 @@ public class WorkspaceModelDependenciesSynchronizer {
 
 		/**
 		 * Create a {@link CountingVisitor}.
-		 * 
-		 * @param contentTypesToConsider
-		 *            the list of content types to consider while counting files..
 		 */
-		public CountingVisitor(Set<String> contentTypesToConsider) {
-			super(contentTypesToConsider, new NullProgressMonitor());
+		public CountingVisitor() {
+			super(allContentTypes(), allFileExtensions(), new NullProgressMonitor());
 		}
 
 		/**
@@ -138,11 +206,17 @@ public class WorkspaceModelDependenciesSynchronizer {
 	 *             on error from the underlying platform.
 	 */
 	public CrossResourceDependencies crawl(final IProgressMonitor pm) throws CoreException {
-		set = new ResourceSetImpl();
-		set.getResourceFactoryRegistry().getContentTypeToFactoryMap().put("*", factory); //$NON-NLS-1$
-		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put("*", factory); //$NON-NLS-1$
-		for (final String contentType : contentTypes) {
-			set.getResourceFactoryRegistry().getExtensionToFactoryMap().put(contentType, factory);
+		for (String extension : genericFileExtensions) {
+			set.getResourceFactoryRegistry().getExtensionToFactoryMap().put(extension, genericFactory);
+		}
+		for (String extension : xmiFileExtensions) {
+			set.getResourceFactoryRegistry().getExtensionToFactoryMap().put(extension, xmiFactory);
+		}
+		for (final String contentType : genericContentTypes) {
+			set.getResourceFactoryRegistry().getContentTypeToFactoryMap().put(contentType, genericFactory);
+		}
+		for (final String contentType : xmiContentTypes) {
+			set.getResourceFactoryRegistry().getContentTypeToFactoryMap().put(contentType, xmiFactory);
 		}
 
 		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
@@ -151,12 +225,12 @@ public class WorkspaceModelDependenciesSynchronizer {
 		final int todo = getNumberOfFilesToCrawl();
 
 		pm.beginTask("Analyzing workspace dependencies", todo); //$NON-NLS-1$
-		root.accept(new AbstractModelResourceVisitor(contentTypes, pm) {
+		root.accept(new AbstractModelResourceVisitor(allContentTypes(), allFileExtensions(), pm) {
 
 			@Override
 			protected void processModel(IFile file) {
 				final URI fileURI = URI.createPlatformResourceURI(file.getFullPath().toOSString(), true);
-				set.getResource(fileURI, true);
+				set.getResource(fileURI, false);
 				pm.worked(1);
 			}
 		});
@@ -167,18 +241,43 @@ public class WorkspaceModelDependenciesSynchronizer {
 	}
 
 	/**
+	 * return all the content types of interest for this indexer.
+	 * 
+	 * @return all the content types of interest for this indexer.
+	 */
+	private SetView<String> allContentTypes() {
+		return Sets.union(genericContentTypes, xmiContentTypes);
+	}
+
+	/**
 	 * return true if the file matches our content types.
 	 * 
 	 * @param file
 	 *            any file.
 	 * @return true if the file matches our content types.
 	 */
+	// CHECKSTYLE:OFF
 	private boolean isOfInterest(IFile file) {
-		for (String contentTypeID : contentTypes) {
+		// CHECKSTYLE:ON
+		for (String fileExtension : allFileExtensions()) {
+			if (fileExtension.equals(file.getFileExtension()))
+				return true;
+		}
+		for (String contentTypeID : allContentTypes()) {
 			if (AbstractModelResourceVisitor.hasContentType(file, contentTypeID))
 				return true;
 		}
+
 		return false;
+	}
+
+	/**
+	 * return all the file extensions of interest for this indexer.
+	 * 
+	 * @return all the file extensions of interest for this indexer.
+	 */
+	private SetView<String> allFileExtensions() {
+		return Sets.union(genericFileExtensions, xmiFileExtensions);
 	}
 
 	/**

@@ -34,6 +34,9 @@ public abstract class AbstractModelResourceVisitor implements IResourceVisitor {
 	/** Content types of the files to consider as potential parents. */
 	private final Set<String> contentTypesToConsider;
 
+	/** file Extensions of the files to consider as models. */
+	private final Set<String> fileExtensionsToConsider;
+
 	/**
 	 * progress monitor to check cancel from the user.
 	 */
@@ -44,11 +47,15 @@ public abstract class AbstractModelResourceVisitor implements IResourceVisitor {
 	 * 
 	 * @param contentTypes
 	 *            : the list of content-type id's to process.
+	 * @param fileExtensions
+	 *            : the list of file Extensions to process.
 	 * @param pm
 	 *            : a progress monitor to check cancellation of the end user.
 	 */
-	public AbstractModelResourceVisitor(Set<String> contentTypes, IProgressMonitor pm) {
+	public AbstractModelResourceVisitor(Set<String> contentTypes, Set<String> fileExtensions,
+			IProgressMonitor pm) {
 		this.contentTypesToConsider = contentTypes;
+		this.fileExtensionsToConsider = fileExtensions;
 		this.monitor = pm;
 	}
 
@@ -61,9 +68,13 @@ public abstract class AbstractModelResourceVisitor implements IResourceVisitor {
 		if (resource instanceof IFile) {
 			final IFile file = (IFile)resource;
 			boolean isModel = false;
-			for (String contentType : contentTypesToConsider) {
-				if (hasContentType(file, contentType)) {
-					isModel = true;
+			if (fileExtensionsToConsider.contains(file.getFileExtension())) {
+				isModel = true;
+			} else {
+				for (String contentType : contentTypesToConsider) {
+					if (hasContentType(file, contentType)) {
+						isModel = true;
+					}
 				}
 			}
 

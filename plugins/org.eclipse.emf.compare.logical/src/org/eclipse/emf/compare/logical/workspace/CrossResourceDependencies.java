@@ -28,7 +28,7 @@ import org.eclipse.emf.ecore.util.ECrossReferenceAdapter;
 
 /**
  * This class is responsible for providing IFile inverse references from a resource set providing a light
- * image of models and their dependencies (see {@link WorkspaceModelDependenciesSynchronizer}.
+ * image of models and their dependencies (see {@link WorkspaceModelDependencies}.
  * 
  * @author Cedric Brun <cedric.brun@obeo.fr>
  * @since 1.3
@@ -61,7 +61,7 @@ public class CrossResourceDependencies {
 	 * 
 	 * @param resourceSet
 	 *            resource set providing a light image of models and their dependencies (see
-	 *            {@link WorkspaceModelDependenciesSynchronizer}.
+	 *            {@link WorkspaceModelDependencies}.
 	 */
 	public CrossResourceDependencies(ResourceSet resourceSet) {
 		this.set = resourceSet;

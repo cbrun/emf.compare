@@ -12,14 +12,14 @@ package org.eclipse.emf.compare.logical.workspace.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.common.util.WrappedException;
@@ -28,6 +28,10 @@ import org.eclipse.emf.compare.logical.workspace.Model;
 import org.eclipse.emf.compare.logical.workspace.WorkspaceFactory;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * A {@link DependencyResource} implementation specific to XMI. It is parsing the xmi input looking for
@@ -38,10 +42,6 @@ import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
  * @since 1.3
  */
 public class XMIDependenciesResourceImpl extends ResourceImpl {
-	/**
-	 * the loading buffer size.
-	 */
-	private static final int BUFFER_SIZE = 0x10000;
 
 	/**
 	 * Create a new resource.
@@ -60,13 +60,16 @@ public class XMIDependenciesResourceImpl extends ResourceImpl {
 
 		try {
 			final Set<String> foundDependencies = collectDependencies(is);
-
 			for (final String uri : foundDependencies) {
 				final Dependency newDep = WorkspaceFactory.eINSTANCE.createDependency();
 				newDep.setTarget(forgeProxy(uri));
 				root.getDependencies().add(newDep);
 			}
 		} catch (WrappedException e) {
+			root.setLoadable(false);
+		} catch (SAXException e) {
+			root.setLoadable(false);
+		} catch (ParserConfigurationException e) {
 			root.setLoadable(false);
 		}
 
@@ -82,30 +85,41 @@ public class XMIDependenciesResourceImpl extends ResourceImpl {
 	 *             when the given encoding is not supported.
 	 * @throws IOException
 	 *             in case of IO error.
+	 * @throws SAXException
+	 *             when Sax can't load the XMI
+	 * @throws ParserConfigurationException
+	 *             when Sax is misconfigured
 	 */
-	private Set<String> collectDependencies(InputStream is) throws UnsupportedEncodingException, IOException {
+	// CHECKSTYLE:OFF
+	private Set<String> collectDependencies(InputStream is) throws UnsupportedEncodingException, IOException,
+			SAXException, ParserConfigurationException {
+		// CHECKSTYLE:ON
 		final Set<String> foundDependencies = new LinkedHashSet<String>();
 
-		// a depedency looks like this : href="SimpleMM1I%20/my/othernstance2.xmi#/
+		final SAXParserFactory factory = SAXParserFactory.newInstance();
+		final InputSource input = new InputSource(is);
+		final SAXParser saxParser = factory.newSAXParser();
+		saxParser.parse(input, new DefaultHandler() {
 
-		final char[] buffer = new char[BUFFER_SIZE];
-		final StringBuilder out = new StringBuilder();
-		// TODO find the encoding...
-		final Reader in = new InputStreamReader(is, "UTF-8"); //$NON-NLS-1$
-		int read;
-		do {
-			read = in.read(buffer, 0, buffer.length);
-			if (read > 0) {
-				out.append(buffer, 0, read);
+			@Override
+			public void startElement(String uri, String localName, String qName, Attributes attributes)
+					throws SAXException {
+				super.startElement(uri, localName, qName, attributes);
+				final int length = attributes.getLength();
+				// Each attribute
+				for (int i = 0; i < length; i++) {
+					// a dependency looks like this : href="SimpleMM1I%20/my/othernstance2.xmi#/
+					final String value = attributes.getValue(i);
+					if (value != null && value.indexOf('#') != -1 && value.indexOf('#') > 0) {
+						final String baseURI = value.substring(0, value.indexOf('#'));
+						foundDependencies.add(baseURI);
+					}
+
+				}
 			}
-		} while (read >= 0);
-		final Pattern p = Pattern.compile("([a-zA-Z/\\.:]+)#"); //$NON-NLS-1$
 
-		final Matcher m = p.matcher(out.toString());
-		while (m.find()) {
-			final String depURI = m.group(1);
-			foundDependencies.add(depURI);
-		}
+		});
+
 		return foundDependencies;
 	}
 

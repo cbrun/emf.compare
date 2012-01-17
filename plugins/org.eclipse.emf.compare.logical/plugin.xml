@@ -13,6 +13,13 @@
       </modelResolver>
    </extension>
    
+    <extension point="org.eclipse.emf.ecore.generated_package">
+    <package 
+       uri = "http://www.eclipse.org/emf/compare/workspace" 
+       class = "org.eclipse.emf.compare.logical.workspace.WorkspacePackage"
+       genModel = "model/workspace.genmodel" /> 
+  </extension>
+   
    <extension
          id="org.eclipse.emf.compare.model.provider"
          name="EMF Compare"

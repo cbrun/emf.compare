@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.compare.logical.EMFCompareLogicalPlugin;
 import org.eclipse.emf.compare.logical.workspace.CrossResourceDependencies;
-import org.eclipse.emf.compare.logical.workspace.WorkspaceModelDependenciesSynchronizer;
+import org.eclipse.emf.compare.logical.workspace.WorkspaceModelDependencies;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 
@@ -48,8 +48,11 @@ public class ModelCrossReferencesResolver implements IModelResolver {
 
 		if (iFile.getProject() != null && iFile.getProject().getWorkspace() != null
 				&& iFile.getProject().getWorkspace().getRoot() != null) {
-			final WorkspaceModelDependenciesSynchronizer collector = new WorkspaceModelDependenciesSynchronizer(
-					getContentTypes());
+			final WorkspaceModelDependencies collector = new WorkspaceModelDependencies();
+			for (String contentTString : getContentTypes()) {
+				collector.contentTypeAsXMI(contentTString);
+			}
+			collector.extensionAsXMI("ecore").extensionAsXMI("genmodel");
 			if (deps == null) {
 				try {
 					deps = collector.crawl(monitor);
