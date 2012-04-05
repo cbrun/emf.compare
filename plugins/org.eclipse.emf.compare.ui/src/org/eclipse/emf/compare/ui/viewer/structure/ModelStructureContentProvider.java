@@ -12,17 +12,10 @@ package org.eclipse.emf.compare.ui.viewer.structure;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSetSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.DiffFactory;
-import org.eclipse.emf.compare.diff.metamodel.DiffModel;
-import org.eclipse.emf.compare.diff.metamodel.DiffResourceSet;
-import org.eclipse.emf.compare.diff.metamodel.util.DiffAdapterFactory;
+import org.eclipse.emf.compare.Comparison;
 import org.eclipse.emf.compare.ui.ModelCompareInput;
 import org.eclipse.emf.compare.ui.internal.ModelComparator;
 import org.eclipse.emf.ecore.EObject;
@@ -81,13 +74,18 @@ public class ModelStructureContentProvider implements ITreeContentProvider {
 		if (parentElement instanceof EObject) {
 			final Collection<EObject> childrenList = new ArrayList<EObject>();
 			for (final EObject child : ((EObject)parentElement).eContents()) {
-				if (!DiffAdapterFactory.shouldBeHidden(child)) {
+				if (!shouldBeHidden(child)) {
 					childrenList.add(child);
 				}
 			}
 			children = childrenList.toArray();
 		}
 		return children;
+	}
+
+	protected boolean shouldBeHidden(final EObject child) {
+		// DiffAdapterFactory.shouldBeHidden(child);
+		return false;
 	}
 
 	/**
@@ -97,23 +95,8 @@ public class ModelStructureContentProvider implements ITreeContentProvider {
 	 */
 	public Object[] getElements(Object inputElement) {
 		Object[] elements = null;
-		if (inputElement instanceof DiffModel) {
-			elements = ((DiffModel)inputElement).getOwnedElements().toArray();
-		} else if (input instanceof DiffModel) {
-			elements = ((DiffModel)input).getOwnedElements().toArray();
-		} else if (input instanceof DiffResourceSet) {
-			final List<Object> elementList = new ArrayList<Object>(((DiffResourceSet)input).getDiffModels());
-			elementList.addAll(((DiffResourceSet)input).getResourceDiffs());
-			if (elementList.isEmpty()) {
-				/*
-				 * binary identical resources. Create a dummy diff to provide the user with feedback that 0
-				 * differences were found.
-				 */
-				final DiffModel dummyDiff = DiffFactory.eINSTANCE.createDiffModel();
-				dummyDiff.getOwnedElements().add(DiffFactory.eINSTANCE.createDiffGroup());
-				elementList.add(dummyDiff);
-			}
-			elements = elementList.toArray();
+		if (inputElement instanceof EObject) {
+			elements = ((EObject)inputElement).eContents().toArray();
 		} else {
 			elements = new Object[0];
 		}
@@ -154,51 +137,31 @@ public class ModelStructureContentProvider implements ITreeContentProvider {
 	 */
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		((TreeViewer)viewer).getTree().clearAll(true);
-		if (newInput == null)
+		if (newInput == null) {
 			return;
+		}
 		final ModelComparator comparator;
 		if (newInput instanceof ICompareInput) {
-			comparator = ModelComparator.getComparator(configuration, (ICompareInput)newInput);
+			comparator = ModelComparator.getComparator(configuration);
 		} else {
 			comparator = ModelComparator.getComparator(configuration);
 		}
 
-		ComparisonSnapshot snapshot = null;
+		Comparison snapshot = null;
 		if (newInput instanceof ModelCompareInput) {
 			snapshot = ((ModelCompareInput)newInput).getComparisonSnapshot();
-		} else if (newInput instanceof ComparisonSnapshot) {
-			snapshot = (ComparisonSnapshot)newInput;
+		} else if (newInput instanceof Comparison) {
+			snapshot = (Comparison)newInput;
 		}
 
-		if (snapshot instanceof ComparisonResourceSnapshot) {
-			input = ((ComparisonResourceSnapshot)snapshot).getDiff();
-		} else if (snapshot instanceof ComparisonResourceSetSnapshot) {
-			input = ((ComparisonResourceSetSnapshot)snapshot).getDiffResourceSet();
-		} else if (comparator.getComparisonResult() != null) {
-			input = retrieveInputFromSnapshot(comparator.getComparisonResult());
+		if (comparator.getComparisonResult() != null) {
+			input = comparator.getComparisonResult();
 		} else if (newInput instanceof ModelCompareInput) {
-			input = ((ModelCompareInput)newInput).getDiff();
+			input = ((ModelCompareInput)newInput).getComparisonSnapshot();
 		} else if (oldInput != newInput && newInput instanceof ICompareInput) {
 			comparator.loadResources((ICompareInput)newInput);
-			input = retrieveInputFromSnapshot(comparator.compare(configuration));
+			input = comparator.compare(configuration);
 		}
 	}
 
-	/**
-	 * Utility function to retrieve the viewer input from the given comparison result.
-	 * 
-	 * @param comparisonResult
-	 *            the result to evaluate
-	 * @return a {@link DiffModel} in case the comparison result is a {@link ComparisonResourceSnapshot}, a
-	 *         {@link DiffResourceSet otherwise}.
-	 */
-	private Object retrieveInputFromSnapshot(final ComparisonSnapshot comparisonResult) {
-		Object retrievedInput = null;
-		if (comparisonResult instanceof ComparisonResourceSnapshot) {
-			retrievedInput = ((ComparisonResourceSnapshot)comparisonResult).getDiff();
-		} else {
-			retrievedInput = ((ComparisonResourceSetSnapshot)comparisonResult).getDiffResourceSet();
-		}
-		return retrievedInput;
-	}
 }

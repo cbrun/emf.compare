@@ -268,6 +268,33 @@ public class ComparePackageImpl extends EPackageImpl implements ComparePackage {
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
+	public EAttribute getMatchResource_Left() {
+		return (EAttribute)matchResourceEClass.getEStructuralFeatures().get(3);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public EAttribute getMatchResource_Right() {
+		return (EAttribute)matchResourceEClass.getEStructuralFeatures().get(4);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	public EAttribute getMatchResource_Origin() {
+		return (EAttribute)matchResourceEClass.getEStructuralFeatures().get(5);
+	}
+
+	/**
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
 	public EClass getMatch() {
 		return matchEClass;
 	}
@@ -571,6 +598,9 @@ public class ComparePackageImpl extends EPackageImpl implements ComparePackage {
 		createEAttribute(matchResourceEClass, MATCH_RESOURCE__LEFT_URI);
 		createEAttribute(matchResourceEClass, MATCH_RESOURCE__RIGHT_URI);
 		createEAttribute(matchResourceEClass, MATCH_RESOURCE__ORIGIN_URI);
+		createEAttribute(matchResourceEClass, MATCH_RESOURCE__LEFT);
+		createEAttribute(matchResourceEClass, MATCH_RESOURCE__RIGHT);
+		createEAttribute(matchResourceEClass, MATCH_RESOURCE__ORIGIN);
 
 		matchEClass = createEClass(MATCH);
 		createEReference(matchEClass, MATCH__SUBMATCHES);
@@ -698,6 +728,18 @@ public class ComparePackageImpl extends EPackageImpl implements ComparePackage {
 				getMatchResource_OriginURI(),
 				ecorePackage.getEString(),
 				"originURI", null, 0, 1, MatchResource.class, !IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEAttribute(
+				getMatchResource_Left(),
+				ecorePackage.getEResource(),
+				"left", null, 1, 1, MatchResource.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEAttribute(
+				getMatchResource_Right(),
+				ecorePackage.getEResource(),
+				"right", null, 1, 1, MatchResource.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
+		initEAttribute(
+				getMatchResource_Origin(),
+				ecorePackage.getEResource(),
+				"origin", null, 0, 1, MatchResource.class, IS_TRANSIENT, !IS_VOLATILE, IS_CHANGEABLE, !IS_UNSETTABLE, !IS_ID, IS_UNIQUE, !IS_DERIVED, IS_ORDERED); //$NON-NLS-1$
 
 		initEClass(matchEClass, Match.class,
 				"Match", !IS_ABSTRACT, !IS_INTERFACE, IS_GENERATED_INSTANCE_CLASS); //$NON-NLS-1$

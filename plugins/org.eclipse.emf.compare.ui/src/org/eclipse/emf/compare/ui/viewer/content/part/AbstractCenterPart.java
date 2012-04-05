@@ -13,7 +13,7 @@ package org.eclipse.emf.compare.ui.viewer.content.part;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.util.EMFCompareConstants;
 import org.eclipse.emf.compare.ui.viewer.content.ModelContentMergeViewer;
 import org.eclipse.swt.SWT;
@@ -105,8 +105,9 @@ public abstract class AbstractCenterPart extends Canvas {
 	 *            Right of the items to connect.
 	 */
 	protected void drawLine(GC gc, ModelContentMergeTabItem leftItem, ModelContentMergeTabItem rightItem) {
-		if (leftItem == null || rightItem == null)
+		if (leftItem == null || rightItem == null) {
 			return;
+		}
 
 		final Rectangle drawingBounds = getBounds();
 		RGB color = ModelContentMergeViewer.getColor(leftItem.getCurveColor());
@@ -150,10 +151,9 @@ public abstract class AbstractCenterPart extends Canvas {
 	 *            Items visible on the right part.
 	 * @return Filtered list of DiffElements.
 	 */
-	protected List<DiffElement> retainVisibleDiffs(List<ModelContentMergeTabItem> leftVisible,
+	protected List<Diff> retainVisibleDiffs(List<ModelContentMergeTabItem> leftVisible,
 			List<ModelContentMergeTabItem> rightVisible) {
-		final List<DiffElement> visibleDiffs = new ArrayList<DiffElement>(leftVisible.size()
-				+ rightVisible.size());
+		final List<Diff> visibleDiffs = new ArrayList<Diff>(leftVisible.size() + rightVisible.size());
 		for (final ModelContentMergeTabItem left : leftVisible) {
 			visibleDiffs.add(left.getDiff());
 		}
@@ -172,8 +172,9 @@ public abstract class AbstractCenterPart extends Canvas {
 	void doubleBufferedPaint(GC dest) {
 		final Point size = getSize();
 
-		if (size.x <= 0 || size.y <= 0)
+		if (size.x <= 0 || size.y <= 0) {
 			return;
+		}
 
 		if (buffer != null) {
 			final Rectangle bufferBounds = buffer.getBounds();

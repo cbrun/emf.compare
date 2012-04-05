@@ -50,16 +50,6 @@ public interface EMFCompareConstants {
 	/** Default color (red) for a removed element circling. */
 	RGB PREFERENCES_DEFAULT_REMOVED_COLOR = new RGB(239, 41, 41);
 
-	/**
-	 * Default value for the siblings search window.
-	 * 
-	 * @deprecated use
-	 *             {@link org.eclipse.emf.compare.util.EMFComparePreferenceConstants#PREFERENCES_DEFAULT_SEARCH_WINDOW}
-	 *             instead.
-	 */
-	@Deprecated
-	int PREFERENCES_DEFAULT_SEARCH_WINDOW = org.eclipse.emf.compare.util.EMFComparePreferenceConstants.PREFERENCES_DEFAULT_SEARCH_WINDOW;
-
 	/** Preferences description for the added element color. */
 	String PREFERENCES_DESCRIPTION_ADDED_COLOR = EMFCompareUIMessages
 			.getString("EMFCompareConstants.preferences.addedColorLabel") + ':'; //$NON-NLS-1$
@@ -175,4 +165,6 @@ public interface EMFCompareConstants {
 
 	/** Three-way change constant (value 2) indicating right side. */
 	int RIGHT = 2;
+
+	String PREFERENCES_KEY_DEFAULT_FILTERS = "emfcompare.default.filters";
 }

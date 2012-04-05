@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.viewer.filter;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.DifferenceKind;
+import org.eclipse.emf.compare.Diff;
+import org.eclipse.emf.compare.DifferenceKind;
 
 /**
  * A filter to mask all the removed elements between two versions of model.
@@ -25,7 +25,7 @@ public class ChangedFilter implements IDifferenceFilter {
 	 * 
 	 * @see org.eclipse.emf.compare.ui.viewer.filter.IDifferenceFilter#hides(org.eclipse.emf.compare.diff.metamodel.DiffElement)
 	 */
-	public boolean hides(DiffElement element) {
+	public boolean hides(Diff element) {
 		return element.getKind().equals(DifferenceKind.CHANGE);
 	}
 }

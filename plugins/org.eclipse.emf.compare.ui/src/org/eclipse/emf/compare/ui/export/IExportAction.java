@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.export;
 
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
+import org.eclipse.emf.compare.Comparison;
 import org.eclipse.swt.graphics.Image;
 
 /**
@@ -30,7 +30,7 @@ public interface IExportAction {
 	 * @param snapshot
 	 *            This represents the contents that should be exported.
 	 */
-	void exportSnapshot(ComparisonSnapshot snapshot);
+	void exportSnapshot(Comparison snapshot);
 
 	/**
 	 * Returns the action's display icon when disabled.

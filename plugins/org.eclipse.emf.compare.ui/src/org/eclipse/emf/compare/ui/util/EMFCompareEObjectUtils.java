@@ -10,11 +10,11 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.util;
 
-import org.eclipse.emf.compare.diff.metamodel.ConflictingDiffElement;
-import org.eclipse.emf.compare.match.metamodel.Match3Elements;
+import org.eclipse.compare.structuremergeviewer.DiffElement;
+import org.eclipse.emf.common.notify.Notifier;
+import org.eclipse.emf.compare.Diff;
+import org.eclipse.emf.compare.ui.AdapterUtils;
 import org.eclipse.emf.compare.ui.EMFCompareUIMessages;
-import org.eclipse.emf.compare.util.AdapterUtils;
-import org.eclipse.emf.compare.util.ClassUtils;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.edit.ui.provider.AdapterFactoryLabelProvider;
 import org.eclipse.swt.graphics.Image;
@@ -42,7 +42,7 @@ public final class EMFCompareEObjectUtils {
 	 *            Object for which we need the image.
 	 * @return Image of the given {@link EObject}.
 	 */
-	public static Image computeObjectImage(EObject eObject) {
+	public static Image computeObjectImage(Notifier eObject) {
 		return getLabelProvider().getImage(eObject);
 	}
 
@@ -53,7 +53,7 @@ public final class EMFCompareEObjectUtils {
 	 *            Object for which we need the name.
 	 * @return Name of the given {@link EObject}.
 	 */
-	public static String computeObjectName(EObject eObject) {
+	public static String computeObjectName(Notifier eObject) {
 		String objectName = getLabelProvider().getText(eObject);
 		if (objectName == null || "".equals(objectName)) { //$NON-NLS-1$
 			objectName = EMFCompareUIMessages.getString("EMFCompareEObjectUtils.undefinedName"); //$NON-NLS-1$
@@ -65,65 +65,44 @@ public final class EMFCompareEObjectUtils {
 	 * Returns the ancestor element of the given {@link EObject}. Will try to invoke the method called
 	 * "getLeftParent" if the {@link EObject} is a {@link ConflictingDiffGroup}, "getOriginElement" if the
 	 * {@link EObject} is a {@link Match3Elements}. <code>null</code> if neither of these methods can be
-	 * found.<br/> This method is intended to be called with a {@link ConflictingDiffGroup} or
-	 * {@link Match3Elements} as argument.
+	 * found.<br/>
+	 * This method is intended to be called with a {@link ConflictingDiffGroup} or {@link Match3Elements} as
+	 * argument.
 	 * 
 	 * @param object
 	 *            The {@link EObject}.
 	 * @return The right element of the given {@link EObject}.
 	 */
-	public static EObject getAncestorElement(EObject object) {
-		EObject ancestorElement = null;
-
-		if (object instanceof ConflictingDiffElement) {
-			ancestorElement = ((ConflictingDiffElement)object).getOriginElement();
-		} else if (object instanceof Match3Elements) {
-			ancestorElement = ((Match3Elements)object).getOriginElement();
-		}
-
-		return ancestorElement;
+	public static EObject getAncestorElement(Diff object) {
+		return object.getMatch().getOrigin();
 	}
 
 	/**
 	 * Returns the left element of the given {@link EObject}. Will try to invoke the method called
 	 * "getLeftElement" and, if it fails to find it, "getLeftParent". <code>null</code> if neither of these
-	 * methods can be found.<br/> This method is intended to be called with a {@link DiffElement} or
-	 * MatchElement as argument.
+	 * methods can be found.<br/>
+	 * This method is intended to be called with a {@link DiffElement} or MatchElement as argument.
 	 * 
 	 * @param object
 	 *            The {@link EObject}.
 	 * @return The left element of the given {@link EObject}.
 	 */
-	public static EObject getLeftElement(EObject object) {
-		EObject leftElement = null;
-
-		leftElement = (EObject)ClassUtils.invokeMethod(object, "getLeftElement"); //$NON-NLS-1$
-		if (leftElement == null) {
-			leftElement = (EObject)ClassUtils.invokeMethod(object, "getLeftParent"); //$NON-NLS-1$
-		}
-
-		return leftElement;
+	public static EObject getLeftElement(Diff object) {
+		return object.getMatch().getLeft();
 	}
 
 	/**
 	 * Returns the right element of the given {@link EObject}. Will try to invoke the method called
 	 * "getRightElement" and, if it fails to find it, "getRightParent". <code>null</code> if neither of these
-	 * methods can be found.<br/> This method is intended to be called with a {@link DiffElement} or
-	 * MatchElement as argument.
+	 * methods can be found.<br/>
+	 * This method is intended to be called with a {@link Diff} or MatchElement as argument.
 	 * 
 	 * @param object
 	 *            The {@link EObject}.
 	 * @return The right element of the given {@link EObject}.
 	 */
-	public static EObject getRightElement(EObject object) {
-		EObject rightElement = null;
-
-		rightElement = (EObject)ClassUtils.invokeMethod(object, "getRightElement"); //$NON-NLS-1$
-		if (rightElement == null) {
-			rightElement = (EObject)ClassUtils.invokeMethod(object, "getRightParent"); //$NON-NLS-1$
-		}
-
-		return rightElement;
+	public static EObject getRightElement(Diff object) {
+		return object.getMatch().getRight();
 	}
 
 	/**

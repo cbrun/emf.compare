@@ -14,8 +14,7 @@ import java.io.IOException;
 
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.util.ModelUtils;
+import org.eclipse.emf.compare.Comparison;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.ui.IEditorLauncher;
@@ -33,9 +32,10 @@ public class ModelCompareEditorLauncher implements IEditorLauncher {
 	 */
 	public void open(IPath file) {
 		try {
-			final EObject snapshot = ModelUtils.load(file.toFile(), new ResourceSetImpl());
-			if (snapshot instanceof ComparisonSnapshot) {
-				CompareUI.openCompareEditor(new ModelCompareEditorInput((ComparisonSnapshot)snapshot));
+			final EObject snapshot = org.eclipse.emf.compare.utils.ModelUtils.load(file.toFile(),
+					new ResourceSetImpl());
+			if (snapshot instanceof Comparison) {
+				CompareUI.openCompareEditor(new ModelCompareEditorInput((Comparison)snapshot));
 			}
 		} catch (final IOException e) {
 			// file couldn't be read

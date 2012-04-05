@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.viewer.content;
 
+import com.google.common.collect.Maps;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,21 +23,11 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareViewerPane;
 import org.eclipse.compare.contentmergeviewer.ContentMergeViewer;
 import org.eclipse.compare.contentmergeviewer.IMergeViewerContentProvider;
+import org.eclipse.compare.structuremergeviewer.DiffElement;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
-import org.eclipse.emf.compare.EMFComparePlugin;
-import org.eclipse.emf.compare.diff.merge.IMerger;
-import org.eclipse.emf.compare.diff.merge.service.MergeFactory;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSetSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.DiffFactory;
-import org.eclipse.emf.compare.diff.metamodel.DiffGroup;
-import org.eclipse.emf.compare.diff.metamodel.DiffModel;
-import org.eclipse.emf.compare.diff.metamodel.DiffResourceSet;
-import org.eclipse.emf.compare.diff.metamodel.util.DiffAdapterFactory;
-import org.eclipse.emf.compare.match.metamodel.MatchModel;
-import org.eclipse.emf.compare.match.metamodel.MatchResourceSet;
+import org.eclipse.emf.common.notify.Notifier;
+import org.eclipse.emf.compare.Comparison;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.AbstractCompareAction;
 import org.eclipse.emf.compare.ui.EMFCompareUIMessages;
 import org.eclipse.emf.compare.ui.EMFCompareUIPlugin;
@@ -49,7 +41,7 @@ import org.eclipse.emf.compare.ui.viewer.content.part.AbstractCenterPart;
 import org.eclipse.emf.compare.ui.viewer.content.part.IModelContentMergeViewerTab;
 import org.eclipse.emf.compare.ui.viewer.content.part.ModelContentMergeTabFolder;
 import org.eclipse.emf.compare.ui.viewer.content.part.ModelContentMergeTabItem;
-import org.eclipse.emf.compare.util.EMFCompareMap;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
@@ -84,7 +76,7 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	public static final int CENTER_WIDTH = 34;
 
 	/** Keeps references to the colors to use when drawing differences markers. */
-	/* package */static Map<String, RGB> colors = new EMFCompareMap<String, RGB>();
+	/* package */static Map<String, RGB> colors = Maps.newHashMap();
 
 	/**
 	 * Indicates that the diff markers should be drawn. This allows defining a threshold to avoid too long
@@ -99,7 +91,7 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	protected ModelContentMergeTabFolder ancestorPart;
 
 	/** Keeps track of the current diff Selection. */
-	protected final List<DiffElement> currentSelection = new ArrayList<DiffElement>();
+	protected final List<Diff> currentSelection = new ArrayList<Diff>();
 
 	/** Left of the three possible parts of this content viewer. */
 	protected ModelContentMergeTabFolder leftPart;
@@ -128,14 +120,14 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	private AbstractCenterPart canvas;
 
 	/**
-	 * This is the action we instantiate to handle the {@link DiffElement}s merge from the left model to the
-	 * right model.
+	 * This is the action we instantiate to handle the {@link Diff}s merge from the left model to the right
+	 * model.
 	 */
 	private Action copyDiffLeftToRight;
 
 	/**
-	 * This is the action we instantiate to handle the {@link DiffElement}s merge from the right model to the
-	 * left model.
+	 * This is the action we instantiate to handle the {@link Diff}s merge from the right model to the left
+	 * model.
 	 */
 	private Action copyDiffRightToLeft;
 
@@ -201,13 +193,10 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 					} else {
 						elements = (List<?>)event.getNewValue();
 					}
-					// We'll remove all diffgroups without subDiffs from the selection
-					final List<DiffElement> selectedDiffs = new ArrayList<DiffElement>();
+					final List<Diff> selectedDiffs = new ArrayList<Diff>();
 					for (int i = 0; i < elements.size(); i++) {
-						if (elements.get(i) instanceof DiffElement
-								&& !(elements.get(i) instanceof DiffGroup && ((DiffGroup)elements.get(i))
-										.getSubDiffElements().size() == 0)) {
-							selectedDiffs.add((DiffElement)elements.get(i));
+						if (elements.get(i) instanceof Diff) {
+							selectedDiffs.add((Diff)elements.get(i));
 						}
 					}
 					setSelection(selectedDiffs);
@@ -293,24 +282,13 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 		}
 		final ModelComparator comparator;
 		if (input instanceof ICompareInput) {
-			comparator = ModelComparator.getComparator(configuration, (ICompareInput)input);
+			comparator = ModelComparator.getComparator(configuration);
 		} else {
 			comparator = ModelComparator.getComparator(configuration);
 		}
-		if (input instanceof ComparisonResourceSnapshot) {
-			final ComparisonResourceSnapshot snapshot = (ComparisonResourceSnapshot)input;
+		if (input instanceof Comparison) {
+			final Comparison snapshot = (Comparison)input;
 			super.setInput(createModelCompareInput(comparator, snapshot));
-		} else if (input instanceof ComparisonResourceSetSnapshot) {
-			final ComparisonResourceSetSnapshot snapshot = (ComparisonResourceSetSnapshot)input;
-			super.setInput(createModelCompareInput(comparator, snapshot));
-		} else if (input instanceof ModelCompareInput) {
-			// if there is already a ModelCompareInput provided, no reloading of resources should be done.
-			super.setInput(input);
-		} else if (input instanceof ICompareInput) {
-			comparator.loadResources((ICompareInput)input);
-			final ComparisonSnapshot snapshot = comparator.compare(configuration);
-			super.setInput(createModelCompareInput(comparator, snapshot));
-			configuration.setProperty(EMFCompareConstants.PROPERTY_CONTENT_INPUT_CHANGED, snapshot);
 		} else {
 			super.setInput(input);
 		}
@@ -327,13 +305,8 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 * @since 1.1
 	 */
 	protected ModelCompareInput createModelCompareInput(ICompareInputDetailsProvider provider,
-			ComparisonSnapshot snapshot) {
-		if (snapshot instanceof ComparisonResourceSetSnapshot) {
-			return new ModelCompareInput(((ComparisonResourceSetSnapshot)snapshot).getMatchResourceSet(),
-					((ComparisonResourceSetSnapshot)snapshot).getDiffResourceSet(), provider);
-		}
-		return new ModelCompareInput(((ComparisonResourceSnapshot)snapshot).getMatch(),
-				((ComparisonResourceSnapshot)snapshot).getDiff(), provider);
+			Comparison snapshot) {
+		return new ModelCompareInput(snapshot);
 	}
 
 	/**
@@ -342,8 +315,8 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 * @param diff
 	 *            {@link DiffElement} backing the current selection.
 	 */
-	public void setSelection(DiffElement diff) {
-		final List<DiffElement> diffs = new ArrayList<DiffElement>();
+	public void setSelection(Diff diff) {
+		final List<Diff> diffs = new ArrayList<Diff>();
 		diffs.add(diff);
 		setSelection(diffs);
 	}
@@ -354,7 +327,7 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 * @param diffs
 	 *            {@link DiffElement} backing the current selection.
 	 */
-	public void setSelection(List<DiffElement> diffs) {
+	public void setSelection(List<Diff> diffs) {
 		currentSelection.clear();
 		if (diffs.size() > 0) {
 			currentSelection.addAll(diffs);
@@ -378,10 +351,12 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 		if (isThreeWay && ancestorPart != null) {
 			ancestorPart.layout();
 		}
-		if (rightPart != null)
+		if (rightPart != null) {
 			rightPart.layout();
-		if (leftPart != null)
+		}
+		if (leftPart != null) {
 			leftPart.layout();
+		}
 		updateCenter();
 		updateToolItems();
 	}
@@ -402,25 +377,14 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 */
 	@Override
 	protected void copy(boolean leftToRight) {
-		if (((ModelCompareInput)getInput()).getDiffAsList().size() > 0) {
+		if (((ModelCompareInput)getInput()).getComparisonSnapshot().getDifferences().size() > 0) {
 			// Avoids warnings "resource has changed ..."
 			setRightDirty(false);
 			setLeftDirty(false);
 
 			((ModelCompareInput)getInput()).copy(leftToRight);
-			if (((ModelCompareInput)getInput()).getDiff() instanceof DiffModel) {
-				final ComparisonResourceSnapshot snap = DiffFactory.eINSTANCE
-						.createComparisonResourceSnapshot();
-				snap.setDiff((DiffModel)((ModelCompareInput)getInput()).getDiff());
-				snap.setMatch((MatchModel)((ModelCompareInput)getInput()).getMatch());
-				configuration.setProperty(EMFCompareConstants.PROPERTY_CONTENT_INPUT_CHANGED, snap);
-			} else {
-				final ComparisonResourceSetSnapshot snap = DiffFactory.eINSTANCE
-						.createComparisonResourceSetSnapshot();
-				snap.setDiffResourceSet((DiffResourceSet)((ModelCompareInput)getInput()).getDiff());
-				snap.setMatchResourceSet((MatchResourceSet)((ModelCompareInput)getInput()).getMatch());
-				configuration.setProperty(EMFCompareConstants.PROPERTY_CONTENT_INPUT_CHANGED, snap);
-			}
+			configuration.setProperty(EMFCompareConstants.PROPERTY_CONTENT_INPUT_CHANGED,
+					((ModelCompareInput)getInput()).getComparisonSnapshot());
 			leftDirty |= !leftToRight;
 			rightDirty |= leftToRight;
 			setLeftDirty(leftDirty);
@@ -430,38 +394,23 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	}
 
 	/**
-	 * Copies a list of {@link DiffElement}s or {@link DiffGroup}s in the given direction, then updates the
-	 * toolbar items states as well as the dirty state of both the left and the right models.
+	 * Copies a list of {@link Diff}s or {@link DiffGroup}s in the given direction, then updates the toolbar
+	 * items states as well as the dirty state of both the left and the right models.
 	 * 
 	 * @param diffs
-	 *            {@link DiffElement Element}s to copy.
+	 *            {@link Diff Element}s to copy.
 	 * @param leftToRight
 	 *            Direction of the copy.
 	 * @see ModelCompareInput#copy(List, boolean)
 	 */
-	protected void copy(List<DiffElement> diffs, boolean leftToRight) {
+	protected void copy(List<Diff> diffs, boolean leftToRight) {
 		if (diffs.size() > 0) {
 			// Avoids warnings "resource has changed ..."
 			setRightDirty(false);
 			setLeftDirty(false);
 
 			((ModelCompareInput)getInput()).copy(diffs, leftToRight);
-			ComparisonSnapshot snapshot = ((ModelCompareInput)getInput()).getComparisonSnapshot();
-			if (snapshot == null) {
-				if (((ModelCompareInput)getInput()).getDiff() instanceof DiffModel) {
-					final ComparisonResourceSnapshot snap = DiffFactory.eINSTANCE
-							.createComparisonResourceSnapshot();
-					snap.setDiff((DiffModel)((ModelCompareInput)getInput()).getDiff());
-					snap.setMatch((MatchModel)((ModelCompareInput)getInput()).getMatch());
-					snapshot = snap;
-				} else {
-					final ComparisonResourceSetSnapshot snap = DiffFactory.eINSTANCE
-							.createComparisonResourceSetSnapshot();
-					snap.setDiffResourceSet((DiffResourceSet)((ModelCompareInput)getInput()).getDiff());
-					snap.setMatchResourceSet((MatchResourceSet)((ModelCompareInput)getInput()).getMatch());
-					snapshot = snap;
-				}
-			}
+			Comparison snapshot = ((ModelCompareInput)getInput()).getComparisonSnapshot();
 			configuration.setProperty(EMFCompareConstants.PROPERTY_CONTENT_INPUT_CHANGED, snapshot);
 			leftDirty |= !leftToRight && configuration.isLeftEditable();
 			rightDirty |= leftToRight && configuration.isRightEditable();
@@ -472,7 +421,7 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	}
 
 	/**
-	 * Undoes the changes implied by the currently selected {@link DiffElement diff}.
+	 * Undoes the changes implied by the currently selected {@link Diff diff}.
 	 */
 	protected void copyDiffLeftToRight() {
 		if (currentSelection != null) {
@@ -625,7 +574,13 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 
 		final Resource resource;
 		if (input instanceof TypedElementWrapper) {
-			resource = ((TypedElementWrapper)input).getObject().eResource();
+
+			Notifier notif = ((TypedElementWrapper)input).getObject();
+			if (notif instanceof Resource) {
+				resource = (Resource)notif;
+			} else {
+				resource = ((EObject)notif).eResource();
+			}
 		} else if (input instanceof List<?>) {
 			resource = (Resource)((List<?>)input).get(0);
 		} else {
@@ -638,7 +593,7 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 				resource.save(stream, null);
 				contents = stream.toByteArray();
 			} catch (final IOException e) {
-				EMFComparePlugin.log(e, false);
+				EMFCompareUIPlugin.log(e, false);
 			}
 		}
 
@@ -652,12 +607,12 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 * 
 	 * @return {@link List} of the visible differences for this comparison.
 	 */
-	protected List<DiffElement> getVisibleDiffs() {
-		final List<DiffElement> diffs = ((ModelCompareInput)getInput()).getDiffAsList();
-		final List<DiffElement> visibleDiffs = new ArrayList<DiffElement>(diffs.size());
+	protected List<Diff> getVisibleDiffs() {
+		final List<Diff> diffs = ((ModelCompareInput)getInput()).getComparisonSnapshot().getDifferences();
+		final List<Diff> visibleDiffs = new ArrayList<Diff>(diffs.size());
 
 		for (int i = 0; i < diffs.size(); i++) {
-			if (!DiffAdapterFactory.shouldBeHidden(diffs.get(i))) {
+			if (!shouldBeHidden(diffs.get(i))) {
 				visibleDiffs.add(diffs.get(i));
 			}
 		}
@@ -724,17 +679,16 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	}
 
 	/**
-	 * Selects the next or previous {@link DiffElement} as compared to the currently selected one.
+	 * Selects the next or previous {@link Diff} as compared to the currently selected one.
 	 * 
 	 * @param down
-	 *            <code>True</code> if we seek the next {@link DiffElement}, <code>False</code> for the
-	 *            previous.
+	 *            <code>True</code> if we seek the next {@link Diff}, <code>False</code> for the previous.
 	 */
 	protected void navigate(boolean down) {
-		final List<DiffElement> diffs = getVisibleDiffs();
+		final List<Diff> diffs = getVisibleDiffs();
 		if (diffs.size() != 0) {
-			final DiffElement theDiff;
-			if (currentSelection.size() > 0 && !(currentSelection.get(0) instanceof DiffGroup)) {
+			final Diff theDiff;
+			if (currentSelection.size() > 0) {
 				theDiff = currentSelection.get(0);
 			} else if (diffs.size() == 1) {
 				theDiff = diffs.get(0);
@@ -745,26 +699,31 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 			}
 			for (int i = 0; i < diffs.size(); i++) {
 				if (diffs.get(i).equals(theDiff) && down) {
-					DiffElement next = diffs.get(0);
+					Diff next = diffs.get(0);
 					if (diffs.size() > i + 1) {
 						next = diffs.get(i + 1);
 					}
-					if (next != null && !DiffAdapterFactory.shouldBeHidden(next)) {
+					if (next != null && !shouldBeHidden(next)) {
 						setSelection(next);
 						break;
 					}
 				} else if (diffs.get(i).equals(theDiff) && !down) {
-					DiffElement previous = diffs.get(diffs.size() - 1);
+					Diff previous = diffs.get(diffs.size() - 1);
 					if (i > 0) {
 						previous = diffs.get(i - 1);
 					}
-					if (previous != null && !DiffAdapterFactory.shouldBeHidden(previous)) {
+					if (previous != null && !shouldBeHidden(previous)) {
 						setSelection(previous);
 						break;
 					}
 				}
 			}
 		}
+	}
+
+	protected boolean shouldBeHidden(Diff next) {
+		// FIXME hidden elements
+		return false;
 	}
 
 	/**
@@ -780,18 +739,21 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 		final ModelComparator comparator = ModelComparator.getComparator(configuration);
 
 		boolean leftEditable = configuration.isLeftEditable();
-		if (comparator != null)
+		if (comparator != null) {
 			leftEditable = leftEditable && !comparator.isLeftRemote();
+		}
 		boolean rightEditable = configuration.isRightEditable();
-		if (comparator != null)
+		if (comparator != null) {
 			rightEditable = rightEditable && !comparator.isRightRemote();
+		}
 
 		boolean canCopyLeftToRight = true;
 		boolean canCopyRightToLeft = true;
 		if (currentSelection.size() == 1) {
-			final IMerger merger = MergeFactory.createMerger(currentSelection.get(0));
-			canCopyLeftToRight = merger.canUndoInTarget();
-			canCopyRightToLeft = merger.canApplyInOrigin();
+			// final IMerger merger = MergeFactory.createMerger(currentSelection.get(0));
+			// canCopyLeftToRight = merger.canUndoInTarget();
+			// canCopyRightToLeft = merger.canApplyInOrigin();
+			// FIXME : merge button states depending on the selection.
 		}
 
 		if (copyDiffLeftToRight != null) {
@@ -866,8 +828,8 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 */
 	private void createPropertiesSyncHandlers(ModelContentMergeTabFolder... parts) {
 		if (parts.length < 2) {
-			throw new IllegalArgumentException(
-					EMFCompareUIMessages.getString("ModelContentMergeViewer.illegalSync")); //$NON-NLS-1$
+			throw new IllegalArgumentException(EMFCompareUIMessages
+					.getString("ModelContentMergeViewer.illegalSync")); //$NON-NLS-1$
 		}
 
 		// horizontal synchronization
@@ -888,8 +850,8 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 */
 	private void createTreeSyncHandlers(ModelContentMergeTabFolder... parts) {
 		if (parts.length < 2) {
-			throw new IllegalArgumentException(
-					EMFCompareUIMessages.getString("ModelContentMergeViewer.illegalSync")); //$NON-NLS-1$
+			throw new IllegalArgumentException(EMFCompareUIMessages
+					.getString("ModelContentMergeViewer.illegalSync")); //$NON-NLS-1$
 		}
 
 		handleHSync(leftPart.getTreePart(), rightPart.getTreePart(), ancestorPart.getTreePart());
@@ -906,10 +868,16 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 	 * @since 1.3
 	 */
 	protected final Object getInputObject(TypedElementWrapper elementWrapper) {
-		final Resource resource = elementWrapper.getObject().eResource();
-		if (resource != null) {
-			return resource.getResourceSet();
+		Notifier notif = elementWrapper.getObject();
+		if (notif instanceof Resource) {
+			if (((Resource)notif).getResourceSet() != null) {
+				return ((Resource)notif).getResourceSet();
+			}
+			return notif;
+		} else if (notif instanceof EObject) {
+			return ((EObject)notif).eResource();
 		}
+
 		return elementWrapper;
 	}
 
@@ -1106,16 +1074,17 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 		 */
 		@Override
 		public void doPaint(GC gc) {
-			if (!ModelContentMergeViewer.shouldDrawDiffMarkers() || getInput() == null)
+			if (!ModelContentMergeViewer.shouldDrawDiffMarkers() || getInput() == null) {
 				return;
+			}
 			final List<ModelContentMergeTabItem> leftVisible = leftPart.getVisibleElements();
 			final List<ModelContentMergeTabItem> rightVisible = rightPart.getVisibleElements();
-			final List<DiffElement> visibleDiffs = retainVisibleDiffs(leftVisible, rightVisible);
+			final List<Diff> visibleDiffs = retainVisibleDiffs(leftVisible, rightVisible);
 			// we don't clear selection when the last diff is merged so this could happen
 			if (currentSelection.size() > 0 && currentSelection.get(0).eContainer() != null) {
 				visibleDiffs.addAll(currentSelection);
 			}
-			for (final DiffElement diff : visibleDiffs) {
+			for (final Diff diff : visibleDiffs) {
 				if (hasLineBeDrawn(diff)) {
 					final ModelContentMergeTabItem leftUIItem = leftPart.getUIItem(diff);
 					final ModelContentMergeTabItem rightUIItem = rightPart.getUIItem(diff);
@@ -1131,13 +1100,10 @@ public class ModelContentMergeViewer extends ContentMergeViewer {
 		 *            the difference element.
 		 * @return true if it has to be drawn, false otherwise.
 		 */
-		protected boolean hasLineBeDrawn(final DiffElement diff) {
-			if (!(diff instanceof DiffGroup)) {
-				final ModelContentMergeTabItem leftUIItem = leftPart.getUIItem(diff);
-				final ModelContentMergeTabItem rightUIItem = rightPart.getUIItem(diff);
-				return leftUIItem != null && rightUIItem != null;
-			}
-			return false;
+		protected boolean hasLineBeDrawn(final Diff diff) {
+			final ModelContentMergeTabItem leftUIItem = leftPart.getUIItem(diff);
+			final ModelContentMergeTabItem rightUIItem = rightPart.getUIItem(diff);
+			return leftUIItem != null && rightUIItem != null;
 		}
 	}
 }

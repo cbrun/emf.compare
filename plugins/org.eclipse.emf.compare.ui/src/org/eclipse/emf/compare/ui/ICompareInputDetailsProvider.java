@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui;
 
-import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.emf.ecore.resource.Resource;
 
 /**
@@ -41,11 +40,4 @@ public interface ICompareInputDetailsProvider {
 	 * @return The compared resources ancestor.
 	 */
 	Resource getAncestorResource();
-
-	/**
-	 * Returns the compare input we've initially been fed.
-	 * 
-	 * @return The initial compare input.
-	 */
-	ICompareInput getCompareInput();
 }

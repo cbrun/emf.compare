@@ -12,7 +12,7 @@ package org.eclipse.emf.compare.ui.viewer.content.part;
 
 import java.util.List;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.swt.widgets.Control;
@@ -92,5 +92,5 @@ public interface IModelContentMergeViewerTab {
 	 * @param items
 	 *            List of the items ot make visible.
 	 */
-	void showItems(List<DiffElement> items);
+	void showItems(List<Diff> items);
 }

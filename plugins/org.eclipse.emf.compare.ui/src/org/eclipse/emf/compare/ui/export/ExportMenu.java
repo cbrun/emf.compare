@@ -20,17 +20,14 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.compare.EMFComparePlugin;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSetSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.DiffModel;
+import org.eclipse.emf.compare.Comparison;
+import org.eclipse.emf.compare.MatchResource;
 import org.eclipse.emf.compare.ui.AbstractCompareAction;
+import org.eclipse.emf.compare.ui.EMFCompareUIPlugin;
 import org.eclipse.emf.compare.ui.ModelCompareInput;
 import org.eclipse.emf.compare.ui.internal.wizard.SaveDeltaWizard;
 import org.eclipse.emf.compare.ui.viewer.content.ModelContentMergeViewer;
 import org.eclipse.emf.compare.ui.viewer.structure.ModelStructureMergeViewer;
-import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IMenuCreator;
@@ -94,12 +91,12 @@ public class ExportMenu extends AbstractCompareAction implements IMenuCreator {
 		saveAction = new AbstractCompareAction(bundle, "action.export.emfdiff.") { //$NON-NLS-1$
 			@Override
 			public void run() {
-				final SaveDeltaWizard wizard = new SaveDeltaWizard(
-						bundle.getString("UI_SaveDeltaWizard_FileExtension")); //$NON-NLS-1$
+				final SaveDeltaWizard wizard = new SaveDeltaWizard(bundle
+						.getString("UI_SaveDeltaWizard_FileExtension")); //$NON-NLS-1$
 				final Object input = parentViewer.getInput();
-				ComparisonSnapshot snapshot = null;
-				if (input instanceof ComparisonSnapshot) {
-					snapshot = (ComparisonSnapshot)input;
+				Comparison snapshot = null;
+				if (input instanceof Comparison) {
+					snapshot = (Comparison)input;
 				} else if (input instanceof ModelCompareInput) {
 					snapshot = ((ModelCompareInput)input).getComparisonSnapshot();
 				}
@@ -117,8 +114,8 @@ public class ExportMenu extends AbstractCompareAction implements IMenuCreator {
 	 * This will parse {@link #EXPORT_ACTIONS_EXTENSION_POINT} for actions to display.
 	 */
 	private static void parseExtensionMetaData() {
-		final IExtension[] extensions = Platform.getExtensionRegistry()
-				.getExtensionPoint(EXPORT_ACTIONS_EXTENSION_POINT).getExtensions();
+		final IExtension[] extensions = Platform.getExtensionRegistry().getExtensionPoint(
+				EXPORT_ACTIONS_EXTENSION_POINT).getExtensions();
 		for (final IExtension extension : extensions) {
 			for (final IConfigurationElement configElement : extension.getConfigurationElements()) {
 				final ExportActionDescriptor descriptor = new ExportActionDescriptor(configElement);
@@ -195,117 +192,24 @@ public class ExportMenu extends AbstractCompareAction implements IMenuCreator {
 	 */
 	public Set<String> getComparedModelsExtensions() {
 		final Set<String> extensions = new LinkedHashSet<String>();
-		if (parentViewer.getInput() instanceof ComparisonResourceSnapshot) {
-			final DiffModel diffModel = ((ComparisonResourceSnapshot)parentViewer.getInput()).getDiff();
-			if (diffModel.getLeftRoots().get(0).eResource() != null) {
-				extensions.add(getFileExtension(diffModel.getLeftRoots().get(0).eResource()));
-			}
-			if (diffModel.getRightRoots().get(0).eResource() != null) {
-				extensions.add(getFileExtension(diffModel.getRightRoots().get(0).eResource()));
-			}
-			if (!diffModel.getAncestorRoots().isEmpty()
-					&& diffModel.getAncestorRoots().get(0).eResource() != null) {
-				extensions.add(getFileExtension(diffModel.getAncestorRoots().get(0).eResource()));
-			}
-		} else {
-			for (final DiffModel diff : ((ComparisonResourceSetSnapshot)parentViewer.getInput())
-					.getDiffResourceSet().getDiffModels()) {
-				if (diff.getLeftRoots().get(0).eResource() != null) {
-					extensions.add(getFileExtension(diff.getLeftRoots().get(0).eResource()));
-				}
-				if (diff.getRightRoots().get(0).eResource() != null) {
-					extensions.add(getFileExtension(diff.getRightRoots().get(0).eResource()));
-				}
-				if (!diff.getAncestorRoots().isEmpty() && diff.getAncestorRoots().get(0).eResource() != null) {
-					extensions.add(getFileExtension(diff.getAncestorRoots().get(0).eResource()));
-				}
+		if (parentViewer.getInput() instanceof Comparison) {
+
+			for (MatchResource rMatch : ((Comparison)parentViewer.getInput()).getMatchedResources()) {
+				collectFileExtensionFromURI(extensions, rMatch.getLeftURI());
+				collectFileExtensionFromURI(extensions, rMatch.getRightURI());
+				collectFileExtensionFromURI(extensions, rMatch.getOriginURI());
 			}
 		}
 		return extensions;
 	}
 
-	/**
-	 * Returns the file extension of the compared models. If the extensions aren't the same, returns
-	 * {@value #ALL_EXTENSIONS}.
-	 * 
-	 * @return The file extension of the compared models.
-	 * @deprecated use {@link #getComparedModelsExtensions()} instead.
-	 */
-	@Deprecated
-	public String getComparedModelsExtension() {
-		String extension = ALL_EXTENSIONS;
-		ComparisonSnapshot snapshot = null;
-		if (parentViewer.getInput() instanceof ComparisonSnapshot) {
-			snapshot = (ComparisonSnapshot)parentViewer.getInput();
-		} else if (parentViewer.getInput() instanceof ModelCompareInput) {
-			snapshot = ((ModelCompareInput)parentViewer.getInput()).getComparisonSnapshot();
+	protected void collectFileExtensionFromURI(final Set<String> extensions, String uri) {
+		if (uri != null) {
+			URI eURI = URI.createURI(uri);
+			if (eURI.fileExtension() != null) {
+				extensions.add(eURI.fileExtension());
+			}
 		}
-		if (snapshot instanceof ComparisonResourceSnapshot) {
-			final DiffModel diffModel = ((ComparisonResourceSnapshot)snapshot).getDiff();
-			String leftExtension = ALL_EXTENSIONS;
-			String rightExtension = ALL_EXTENSIONS;
-			String ancestorExtension = null;
-			if (diffModel.getLeftRoots().get(0).eResource() != null) {
-				leftExtension = getFileExtension(diffModel.getLeftRoots().get(0).eResource());
-			}
-			if (diffModel.getRightRoots().get(0).eResource() != null) {
-				rightExtension = getFileExtension(diffModel.getRightRoots().get(0).eResource());
-			}
-			if (!diffModel.getAncestorRoots().isEmpty()
-					&& diffModel.getAncestorRoots().get(0).eResource() != null) {
-				ancestorExtension = getFileExtension(diffModel.getAncestorRoots().get(0).eResource());
-			}
-
-			if (leftExtension.equals(rightExtension)
-					&& (ancestorExtension == null || leftExtension.equals(ancestorExtension))) {
-				extension = leftExtension;
-			}
-		} else if (snapshot != null) {
-			String lastExtension = null;
-			for (final DiffModel diff : ((ComparisonResourceSetSnapshot)snapshot).getDiffResourceSet()
-					.getDiffModels()) {
-				String leftExtension = ALL_EXTENSIONS;
-				String rightExtension = ALL_EXTENSIONS;
-				String ancestorExtension = null;
-				if (diff.getLeftRoots().get(0).eResource() != null) {
-					leftExtension = getFileExtension(diff.getLeftRoots().get(0).eResource());
-				}
-				if (diff.getRightRoots().get(0).eResource() != null) {
-					rightExtension = getFileExtension(diff.getRightRoots().get(0).eResource());
-				}
-				if (!diff.getAncestorRoots().isEmpty() && diff.getAncestorRoots().get(0).eResource() != null) {
-					ancestorExtension = getFileExtension(diff.getAncestorRoots().get(0).eResource());
-				}
-
-				if (leftExtension.equals(rightExtension)
-						&& (ancestorExtension == null || leftExtension.equals(ancestorExtension))) {
-					if (lastExtension != null && !leftExtension.equals(lastExtension)) {
-						lastExtension = ALL_EXTENSIONS;
-						break;
-					} else if (lastExtension == null) {
-						lastExtension = leftExtension;
-					}
-				}
-			}
-			extension = lastExtension;
-		}
-		return extension;
-	}
-
-	/**
-	 * Retrieves the file extension of the given EMF resource if any.
-	 * 
-	 * @param resource
-	 *            The resource from which URI we need the file extension.
-	 * @return The resource extension if any, {@value #ALL_EXTENSIONS} otherwise.
-	 */
-	private static String getFileExtension(Resource resource) {
-		String extension = ALL_EXTENSIONS;
-		final URI uri = resource.getURI();
-		if (uri.fileExtension() != null) {
-			extension = uri.fileExtension();
-		}
-		return extension;
 	}
 
 	/**
@@ -330,7 +234,7 @@ public class ExportMenu extends AbstractCompareAction implements IMenuCreator {
 			final Action action = new AbstractCompareAction(actionDescriptor) {
 				@Override
 				public void run() {
-					actionDescriptor.exportSnapshot((ComparisonSnapshot)parentViewer.getInput());
+					actionDescriptor.exportSnapshot((Comparison)parentViewer.getInput());
 				}
 			};
 			addActionToMenu(action);
@@ -344,8 +248,9 @@ public class ExportMenu extends AbstractCompareAction implements IMenuCreator {
 	 * @see org.eclipse.jface.action.IMenuCreator#getMenu(org.eclipse.swt.widgets.Menu)
 	 */
 	public Menu getMenu(Menu parent) {
-		if (menuManager.getMenu() != null)
+		if (menuManager.getMenu() != null) {
 			return menuManager.getMenu();
+		}
 		return null;
 	}
 
@@ -404,7 +309,7 @@ final class ExportActionDescriptor {
 			try {
 				action = (IExportAction)element.createExecutableExtension(ATTRIBUTE_EXPORT_ACTION_CLASS);
 			} catch (final CoreException e) {
-				EMFComparePlugin.log(e, true);
+				EMFCompareUIPlugin.log(e, true);
 			}
 		}
 		return action;

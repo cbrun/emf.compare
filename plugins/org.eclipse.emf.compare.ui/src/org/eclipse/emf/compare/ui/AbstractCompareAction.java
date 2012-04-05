@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.emf.compare.EMFComparePlugin;
 import org.eclipse.emf.compare.ui.export.IExportAction;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -104,7 +103,7 @@ public abstract class AbstractCompareAction extends Action {
 					enabledImageDescriptor = ImageDescriptor.createFromURL(FileLocator.toFileURL(Platform
 							.getBundle(EMFCompareUIPlugin.PLUGIN_ID).getEntry("icons/full/" + imagePath))); //$NON-NLS-1$
 				} catch (IOException e) {
-					EMFComparePlugin.log(e.getMessage(), false);
+					EMFCompareUIPlugin.log(e, false);
 				}
 			}
 

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.util.OrderingUtils;
 import org.eclipse.emf.compare.ui.viewer.content.part.ModelContentMergeTabFolder;
 import org.eclipse.emf.compare.ui.viewer.content.part.ModelContentMergeTabItem;
@@ -56,7 +56,7 @@ public class ParameterizedContentMergeDiffTab extends ModelContentMergeDiffTab {
 		final Iterator<ModelContentMergeTabItem> elements = super.getVisibleElements().iterator();
 		while (elements.hasNext()) {
 			final ModelContentMergeTabItem item = elements.next();
-			final DiffElement diff = item.getDiff();
+			final Diff diff = item.getDiff();
 			if (!OrderingUtils.isHidden(diff, selectedFilters)) {
 				result.add(item);
 			}

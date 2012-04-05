@@ -20,13 +20,8 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.emf.compare.diff.engine.IMatchManager.MatchSide;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSetSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.DiffModel;
-import org.eclipse.emf.compare.diff.metamodel.DiffPackage;
+import org.eclipse.emf.compare.Comparison;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.ModelCompareInput;
 import org.eclipse.emf.compare.ui.viewer.filter.IDifferenceFilter;
 import org.eclipse.emf.compare.ui.viewer.group.IDifferenceGroupingFacility;
@@ -39,7 +34,6 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.jface.viewers.IInputProvider;
 import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
@@ -76,30 +70,26 @@ public final class CompareServices {
 		final ISelectionProvider provider = editor.getEditorSite().getSelectionProvider();
 		if (provider instanceof IInputProvider) {
 			final List<EObject> objsToReference = new ArrayList<EObject>();
-			Object root = ((IInputProvider)provider).getInput();
-			if (root instanceof ModelCompareInput) {
-				root = ((ModelCompareInput)root).getComparisonSnapshot();
-			}
-			if (root instanceof EObject) {
-				for (String id : objectIds) {
-					final EObject leftRoot = getElement((EObject)root, MatchSide.LEFT);
-					EObject obj = getEObject(leftRoot.eResource(), id);
-					if (obj == null) {
-						final EObject rightRoot = getElement((EObject)root, MatchSide.RIGHT);
-						obj = getEObject(rightRoot.eResource(), id);
-					}
-					if (obj != null) {
-						objsToReference.add(obj);
-					}
-				}
-			}
-			if (objsToReference.size() > 0) {
-				final EcoreUtil.CrossReferencer crossReferencer = createCrossReferencer((EObject)root);
-				editor.getEditorSite()
-						.getSelectionProvider()
-						.setSelection(
-								new StructuredSelection(getDiffsToSelect(objsToReference, crossReferencer)));
-			}
+			// FIXME CNO : adapt API
+			// if (((IInputProvider)provider).getInput() instanceof ModelCompareInput) {
+			// Comparison root = ((ModelCompareInput)root).getComparisonSnapshot();
+			// for (String id : objectIds) {
+			// final EObject leftRoot = getElement((EObject)root, MatchSide.LEFT);
+			// EObject obj = getEObject(leftRoot.eResource(), id);
+			// if (obj == null) {
+			// final EObject rightRoot = getElement((EObject)root, MatchSide.RIGHT);
+			// obj = getEObject(rightRoot.eResource(), id);
+			// }
+			// if (obj != null) {
+			// objsToReference.add(obj);
+			// }
+			// }
+			// if (objsToReference.size() > 0) {
+			// final EcoreUtil.CrossReferencer crossReferencer = createCrossReferencer((EObject)root);
+			// editor.getEditorSite().getSelectionProvider().setSelection(
+			// new StructuredSelection(getDiffsToSelect(objsToReference, crossReferencer)));
+			// }
+			// }
 		}
 	}
 
@@ -161,10 +151,10 @@ public final class CompareServices {
 	 * @throws PartInitException
 	 *             The exception.
 	 */
-	public static void openView(final ComparisonSnapshot input) throws InterruptedException,
+	public static void openView(final Comparison input) throws InterruptedException,
 			InvocationTargetException, PartInitException {
-		final IViewPart part = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-				.showView("org.eclipse.emf.compare.ui.views.StructureView"); //$NON-NLS-1$
+		final IViewPart part = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(
+				"org.eclipse.emf.compare.ui.views.StructureView"); //$NON-NLS-1$
 		if (part instanceof StructureView) {
 			((StructureView)part).setInput(input);
 			((StructureView)part).setDifferenceFilters(null);
@@ -189,11 +179,11 @@ public final class CompareServices {
 	 * @throws PartInitException
 	 *             The exception.
 	 */
-	public static void openView(final ComparisonSnapshot input, final List<IDifferenceFilter> filters,
+	public static void openView(final Comparison input, final List<IDifferenceFilter> filters,
 			final IDifferenceGroupingFacility group) throws InterruptedException, InvocationTargetException,
 			PartInitException {
-		final IViewPart part = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-				.showView("org.eclipse.emf.compare.ui.views.StructureView"); //$NON-NLS-1$
+		final IViewPart part = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(
+				"org.eclipse.emf.compare.ui.views.StructureView"); //$NON-NLS-1$
 		if (part instanceof StructureView) {
 			((StructureView)part).setInput(input);
 			((StructureView)part).setDifferenceFilters(filters);
@@ -220,8 +210,8 @@ public final class CompareServices {
 		final ISelectionProvider provider = editor.getEditorSite().getSelectionProvider();
 		if (provider instanceof IInputProvider) {
 			final Object root = ((IInputProvider)provider).getInput();
-			if (root instanceof ComparisonSnapshot) {
-				openView((ComparisonSnapshot)root);
+			if (root instanceof Comparison) {
+				openView((Comparison)root);
 			} else if (root instanceof ModelCompareInput) {
 				openView(((ModelCompareInput)root).getComparisonSnapshot());
 			}
@@ -251,8 +241,8 @@ public final class CompareServices {
 		final ISelectionProvider provider = editor.getEditorSite().getSelectionProvider();
 		if (provider instanceof IInputProvider) {
 			final Object root = ((IInputProvider)provider).getInput();
-			if (root instanceof ComparisonSnapshot) {
-				openView((ComparisonSnapshot)root, filters, group);
+			if (root instanceof Comparison) {
+				openView((Comparison)root, filters, group);
 			} else if (root instanceof ModelCompareInput) {
 				openView(((ModelCompareInput)root).getComparisonSnapshot(), filters, group);
 			}
@@ -268,7 +258,7 @@ public final class CompareServices {
 	 *            The result of model comparison.
 	 * @return The {@link StructureViewer}
 	 */
-	public static StructureViewer getStructureViewer(Composite parent, ComparisonSnapshot input) {
+	public static StructureViewer getStructureViewer(Composite parent, Comparison input) {
 		final StructureViewer viewer = new StructureViewer(parent, new CompareConfiguration());
 		viewer.setInput(input);
 		return viewer;
@@ -288,7 +278,7 @@ public final class CompareServices {
 	 *            The grouping to apply.
 	 * @return The {@link StructureViewer}
 	 */
-	public static StructureViewer getStructureViewer(Composite parent, ComparisonSnapshot input,
+	public static StructureViewer getStructureViewer(Composite parent, Comparison input,
 			List<IDifferenceFilter> filters, IDifferenceGroupingFacility groupingFacility) {
 		final StructureViewer viewer = new StructureViewer(parent, new CompareConfiguration(), filters,
 				groupingFacility);
@@ -311,32 +301,6 @@ public final class CompareServices {
 		input.run(new NullProgressMonitor());
 
 		CompareUI.openCompareEditor(input);
-	}
-
-	/**
-	 * Creates a cross referencer on a difference resource set or difference model, from the given root
-	 * element.
-	 * 
-	 * @param comparisonSnapshot
-	 *            The root element.
-	 * @return The cross referencer.
-	 */
-	private static EcoreUtil.CrossReferencer createCrossReferencer(final EObject comparisonSnapshot) {
-		EObject diffRoot = null;
-		if (comparisonSnapshot instanceof ComparisonResourceSetSnapshot) {
-			diffRoot = getDiffElement(comparisonSnapshot, DiffPackage.Literals.DIFF_RESOURCE_SET);
-		} else if (comparisonSnapshot instanceof ComparisonResourceSnapshot) {
-			diffRoot = getDiffElement(comparisonSnapshot, DiffPackage.Literals.DIFF_MODEL);
-		}
-		EcoreUtil.CrossReferencer crossReferencer = new EcoreUtil.CrossReferencer(diffRoot) {
-			/** Generic Serial ID. */
-			private static final long serialVersionUID = 1L;
-
-			{
-				crossReference();
-			}
-		};
-		return crossReferencer;
 	}
 
 	/**
@@ -369,14 +333,14 @@ public final class CompareServices {
 	 *            The cross referencer.
 	 * @return The list of differences to select.
 	 */
-	private static List<DiffElement> getDiffsToSelect(EObject obj, EcoreUtil.CrossReferencer crossReferencer) {
-		final List<DiffElement> result = new ArrayList<DiffElement>();
+	private static List<Diff> getDiffsToSelect(EObject obj, EcoreUtil.CrossReferencer crossReferencer) {
+		final List<Diff> result = new ArrayList<Diff>();
 		final Collection<Setting> settings = crossReferencer.get(obj);
 		if (settings != null) {
 			for (Setting setting : settings) {
 				final EObject crossElt = setting.getEObject();
-				if (crossElt instanceof DiffElement) {
-					result.add((DiffElement)crossElt);
+				if (crossElt instanceof Diff) {
+					result.add((Diff)crossElt);
 				}
 			}
 		}
@@ -392,47 +356,13 @@ public final class CompareServices {
 	 *            The cross referencer.
 	 * @return The list of differences to select.
 	 */
-	private static List<DiffElement> getDiffsToSelect(List<EObject> objs,
-			EcoreUtil.CrossReferencer crossReferencer) {
-		final List<DiffElement> result = new ArrayList<DiffElement>();
+	private static List<Diff> getDiffsToSelect(List<EObject> objs, EcoreUtil.CrossReferencer crossReferencer) {
+		final List<Diff> result = new ArrayList<Diff>();
 		for (EObject eObject : objs) {
-			final List<DiffElement> diffs = getDiffsToSelect(eObject, crossReferencer);
-			for (DiffElement diffElement : diffs) {
+			final List<Diff> diffs = getDiffsToSelect(eObject, crossReferencer);
+			for (Diff diffElement : diffs) {
 				if (!result.contains(diffElement)) {
 					result.add(diffElement);
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * From the root of a difference model, it returns the root model object of the specified side.
-	 * 
-	 * @param rootDiff
-	 *            The root difference model object.
-	 * @param side
-	 *            The side to scan.
-	 * @return The root model object or null if not found.
-	 */
-	private static EObject getElement(EObject rootDiff, MatchSide side) {
-		EObject result = null;
-		final Iterator<EObject> it = rootDiff.eAllContents();
-		while (it.hasNext()) {
-			final EObject obj = it.next();
-			if (obj instanceof DiffModel) {
-				switch (side) {
-					case LEFT:
-						result = ((DiffModel)obj).getLeftRoots().get(0);
-						break;
-					case RIGHT:
-						result = ((DiffModel)obj).getRightRoots().get(0);
-						break;
-					case ANCESTOR:
-						result = ((DiffModel)obj).getAncestorRoots().get(0);
-						break;
-					default:
-						break;
 				}
 			}
 		}

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.EMFCompareUIPlugin;
 import org.eclipse.emf.compare.ui.util.EMFCompareConstants;
 import org.eclipse.emf.compare.ui.util.OrderingUtils;
@@ -24,7 +24,6 @@ import org.eclipse.emf.compare.ui.viewer.content.part.ParameterizedContentMergeT
 import org.eclipse.emf.compare.ui.viewer.content.part.diff.ParameterizedContentMergeDiffTab;
 import org.eclipse.emf.compare.ui.viewer.filter.DifferenceFilterRegistry;
 import org.eclipse.emf.compare.ui.viewer.filter.IDifferenceFilter;
-import org.eclipse.emf.compare.util.EMFComparePreferenceConstants;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.events.DisposeEvent;
@@ -79,8 +78,8 @@ public class ParameterizedContentMergeViewer extends ModelContentMergeViewer {
 		// deprecated:
 		instance = this;
 
-		final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore()
-				.getString(EMFComparePreferenceConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
+		final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore().getString(
+				EMFCompareConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
 		selectedFilters = DifferenceFilterRegistry.INSTANCE.getFilters(preferenceValue);
 		orderingSelectionListener = new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
@@ -133,7 +132,7 @@ public class ParameterizedContentMergeViewer extends ModelContentMergeViewer {
 		 * @see org.eclipse.emf.compare.ui.viewer.content.ModelContentMergeViewer.CenterCanvas#hasLineBeDrawn(org.eclipse.emf.compare.diff.metamodel.DiffElement)
 		 */
 		@Override
-		protected boolean hasLineBeDrawn(DiffElement diff) {
+		protected boolean hasLineBeDrawn(Diff diff) {
 			return super.hasLineBeDrawn(diff) && !OrderingUtils.isHidden(diff, selectedFilters);
 		}
 

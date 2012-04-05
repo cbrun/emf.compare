@@ -12,7 +12,7 @@ package org.eclipse.emf.compare.ui.viewer.group;
 
 import java.util.Set;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.emf.compare.Diff;
 
 /**
  * Interface for the grouping facilities that can be provided through the extension point.
@@ -89,12 +89,15 @@ public interface IDifferenceGroupingFacility {
 			int iconHash = 0;
 			int idHash = 0;
 			int nameHash = 0;
-			if (icon != null)
+			if (icon != null) {
 				iconHash = icon.hashCode();
-			if (id != null)
+			}
+			if (id != null) {
 				idHash = id.hashCode();
-			if (name != null)
+			}
+			if (name != null) {
 				nameHash = name.hashCode();
+			}
 
 			final int prime = 31;
 			int result = 1;
@@ -172,5 +175,5 @@ public interface IDifferenceGroupingFacility {
 	 *            The difference element.
 	 * @return The group
 	 */
-	UIDifferenceGroup belongsTo(DiffElement d);
+	UIDifferenceGroup belongsTo(Diff d);
 }

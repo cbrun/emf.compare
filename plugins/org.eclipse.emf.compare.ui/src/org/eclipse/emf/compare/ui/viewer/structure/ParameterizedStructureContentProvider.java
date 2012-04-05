@@ -17,11 +17,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.structuremergeviewer.DiffElement;
 import org.eclipse.emf.common.util.EList;
-import org.eclipse.emf.compare.diff.metamodel.AbstractDiffExtension;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.DiffGroup;
-import org.eclipse.emf.compare.diff.metamodel.DiffModel;
+import org.eclipse.emf.compare.Comparison;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.util.OrderingUtils;
 import org.eclipse.emf.compare.ui.viewer.filter.IDifferenceFilter;
 import org.eclipse.emf.compare.ui.viewer.group.IDifferenceGroupingFacility;
@@ -148,25 +147,26 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 	 *            The element of which we need to check the "hidden" state.
 	 * @return <code>true</code> if the given element should be hidden, <code>false</code> otherwise.
 	 */
-	private boolean shouldBeHidden(EObject element) {
+	@Override
+	protected boolean shouldBeHidden(EObject element) {
 		boolean result = false;
-		if (element instanceof DiffElement) {
-			final DiffElement diff = (DiffElement)element;
-			final Iterator<AbstractDiffExtension> it = diff.getIsHiddenBy().iterator();
-			while (it.hasNext()) {
-				final AbstractDiffExtension extension = it.next();
-				if (!extension.isIsCollapsed()) {
-					result = true;
-				}
-			}
-			result = result || isHiddenInMyContext((DiffElement)element);
-		}
-		if (element instanceof DiffGroup) {
-			final DiffGroup group = (DiffGroup)element;
-			if (filteredSubchanges(group) == 0) {
-				result = true;
-			}
-		}
+		// if (element instanceof DiffElement) {
+		// final DiffElement diff = (DiffElement)element;
+		// final Iterator<AbstractDiffExtension> it = diff.getIsHiddenBy().iterator();
+		// while (it.hasNext()) {
+		// final AbstractDiffExtension extension = it.next();
+		// if (!extension.isIsCollapsed()) {
+		// result = true;
+		// }
+		// }
+		// result = result || isHiddenInMyContext((DiffElement)element);
+		// }
+		// if (element instanceof DiffGroup) {
+		// final DiffGroup group = (DiffGroup)element;
+		// if (filteredSubchanges(group) == 0) {
+		// result = true;
+		// }
+		// }
 		return result;
 	}
 
@@ -179,21 +179,21 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 	 *            filtered.
 	 * @return The count of changes that are neither hidden nor filtered.
 	 */
-	private int filteredSubchanges(DiffGroup group) {
-		final Iterator<DiffElement> it = group.getSubDiffElements().iterator();
-		int result = 0;
-		while (it.hasNext()) {
-			final DiffElement eObj = it.next();
-			if (!shouldBeHidden(eObj)) {
-				if (eObj instanceof DiffGroup) {
-					result += filteredSubchanges((DiffGroup)eObj);
-				} else {
-					result += 1;
-				}
-			}
-		}
-		return result;
-	}
+	// private int filteredSubchanges(DiffGroup group) {
+	// final Iterator<DiffElement> it = group.getSubDiffElements().iterator();
+	// int result = 0;
+	// while (it.hasNext()) {
+	// final DiffElement eObj = it.next();
+	// if (!shouldBeHidden(eObj)) {
+	// if (eObj instanceof DiffGroup) {
+	// result += filteredSubchanges((DiffGroup)eObj);
+	// } else {
+	// result += 1;
+	// }
+	// }
+	// }
+	// return result;
+	// }
 
 	/**
 	 * {@inheritDoc}
@@ -214,22 +214,22 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 	 */
 	protected Object[] groupElements(Object parentElement) {
 		if (parentElement instanceof UIDifferenceGroup && selectedGroupFacility != null) {
-			final List<DiffElement> diffs = new ArrayList<DiffElement>();
+			final List<Diff> diffs = new ArrayList<Diff>();
 
 			final Object[] differences = super.getElements(null);
 			for (int i = 0; i < differences.length; i++) {
 				final Object object = differences[i];
-				if (object instanceof DiffModel) {
-					final DiffModel diffModel = (DiffModel)object;
-					final EList<DiffElement> allDifferences = diffModel.getDifferences();
-					for (DiffElement diffElement : allDifferences) {
+				if (object instanceof Comparison) {
+					final Comparison diffModel = (Comparison)object;
+					final EList<Diff> allDifferences = diffModel.getDifferences();
+					for (Diff diffElement : allDifferences) {
 						if (parentElement.equals(selectedGroupFacility.belongsTo(diffElement))
 								&& !shouldBeHidden(diffElement)) {
 							diffs.add(diffElement);
 						}
 					}
-				} else if (object instanceof DiffElement) {
-					final DiffElement diffElement = (DiffElement)object;
+				} else if (object instanceof Diff) {
+					final Diff diffElement = (Diff)object;
 					if (parentElement.equals(selectedGroupFacility.belongsTo(diffElement))
 							&& !shouldBeHidden(diffElement)) {
 						diffs.add(diffElement);
@@ -258,8 +258,7 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 		final Iterator<Object> itResult = lResult.iterator();
 		while (itResult.hasNext()) {
 			final Object obj = itResult.next();
-			if (obj instanceof DiffElement && !(obj instanceof DiffGroup)
-					&& isHiddenInMyContext((DiffElement)obj)) {
+			if (obj instanceof Diff && isHiddenInMyContext((Diff)obj)) {
 				filteredResult.remove(obj);
 			}
 		}
@@ -276,7 +275,7 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 	 * @return true if it is hidden, false otherwise.
 	 */
 	@Deprecated
-	public static boolean isHidden(DiffElement element) {
+	public static boolean isHidden(Diff element) {
 		return OrderingUtils.isHidden(element, mSelectedFilters);
 	}
 
@@ -288,7 +287,7 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 	 * @return true if it is hidden, false otherwise.
 	 * @since 1.3
 	 */
-	public boolean isHiddenInMyContext(DiffElement element) {
+	public boolean isHiddenInMyContext(Diff element) {
 		return OrderingUtils.isHidden(element, selectedFilters);
 	}
 
@@ -325,8 +324,8 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 			final Object d = elements[i];
 			initChildrenGroups(d);
 
-			if (d instanceof DiffElement) {
-				selectedGroupFacility.belongsTo((DiffElement)d);
+			if (d instanceof Diff) {
+				selectedGroupFacility.belongsTo((Diff)d);
 			}
 		}
 	}
@@ -343,8 +342,8 @@ public class ParameterizedStructureContentProvider extends ModelStructureContent
 			final Object d = elements[i];
 			initChildrenGroups(d);
 
-			if (d instanceof DiffElement) {
-				selectedGroupFacility.belongsTo((DiffElement)d);
+			if (d instanceof Diff) {
+				selectedGroupFacility.belongsTo((Diff)d);
 			}
 		}
 	}

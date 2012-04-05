@@ -17,17 +17,14 @@ import java.util.List;
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.CompareViewerPane;
+import org.eclipse.compare.structuremergeviewer.DiffElement;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.emf.compare.diff.metamodel.AbstractDiffExtension;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSetSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.UpdateAttribute;
+import org.eclipse.emf.compare.AttributeChange;
+import org.eclipse.emf.compare.Comparison;
+import org.eclipse.emf.compare.ui.AdapterUtils;
 import org.eclipse.emf.compare.ui.CompareTextDialog;
 import org.eclipse.emf.compare.ui.EMFCompareUIMessages;
-import org.eclipse.emf.compare.ui.ICompareInputDetailsProvider;
 import org.eclipse.emf.compare.ui.ModelCompareInput;
 import org.eclipse.emf.compare.ui.export.ExportMenu;
 import org.eclipse.emf.compare.ui.internal.ModelComparator;
@@ -35,7 +32,6 @@ import org.eclipse.emf.compare.ui.util.EMFCompareConstants;
 import org.eclipse.emf.compare.ui.viewer.menus.ContextualMenuDescriptor;
 import org.eclipse.emf.compare.ui.viewer.menus.ContextualMenuRegistry;
 import org.eclipse.emf.compare.ui.viewer.menus.IContextualMenu;
-import org.eclipse.emf.compare.util.AdapterUtils;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.edit.ui.provider.AdapterFactoryLabelProvider;
 import org.eclipse.jface.action.Action;
@@ -92,7 +88,7 @@ public class ModelStructureMergeViewer extends TreeViewer {
 	 * 
 	 * @since 1.3
 	 */
-	protected ComparisonSnapshot emfInput;
+	protected Comparison emfInput;
 
 	/**
 	 * Allows us to ignore a selection event in the content viewer if it is one caused by a selection event in
@@ -196,8 +192,9 @@ public class ModelStructureMergeViewer extends TreeViewer {
 				final Action action = new CompareTextAction();
 				action.setText(EMFCompareUIMessages.getString("CompareTextDialog_labelAction")); //$NON-NLS-1$
 
-				if (action.isEnabled())
+				if (action.isEnabled()) {
 					manager.add(action);
+				}
 			}
 		});
 		final Menu menu = menuMgr.createContextMenu(getTree());
@@ -234,13 +231,13 @@ public class ModelStructureMergeViewer extends TreeViewer {
 	 * @return The {@link UpdateAttribute} that is selected in the Tree if any, <code>null</code> otherwise.
 	 * @since 1.2
 	 */
-	protected UpdateAttribute getUpdateAttribute() {
+	protected AttributeChange getUpdateAttribute() {
 		final TreeItem[] items = getTree().getSelection();
 
 		if (items.length > 0) {
 			final TreeItem item = items[0];
-			if (item.getData() instanceof UpdateAttribute) {
-				return (UpdateAttribute)item.getData();
+			if (item.getData() instanceof AttributeChange) {
+				return (AttributeChange)item.getData();
 			}
 		}
 
@@ -293,21 +290,16 @@ public class ModelStructureMergeViewer extends TreeViewer {
 	protected void inputChanged(Object input, Object oldInput) {
 		final ModelComparator comparator;
 		if (input instanceof ICompareInput) {
-			comparator = ModelComparator.getComparator(configuration, (ICompareInput)input);
+			comparator = ModelComparator.getComparator(configuration);
 		} else {
 			comparator = ModelComparator.getComparator(configuration);
 		}
 
 		Object actualInput = input;
-		if (input instanceof ComparisonResourceSnapshot) {
-			final ComparisonResourceSnapshot snapshot = (ComparisonResourceSnapshot)input;
-			actualInput = createModelCompareInput(comparator, snapshot);
-			emfInput = snapshot;
-		} else if (input instanceof ComparisonResourceSetSnapshot) {
-			final ComparisonResourceSetSnapshot snapshot = (ComparisonResourceSetSnapshot)input;
-			actualInput = createModelCompareInput(comparator, snapshot);
-			emfInput = snapshot;
-		}
+
+		ModelCompareInput newInput = createModelCompareInput(comparator);
+		this.emfInput = newInput.getComparisonSnapshot();
+		actualInput = newInput;
 
 		if (actualInput != input) {
 			setInput(actualInput);
@@ -332,14 +324,8 @@ public class ModelStructureMergeViewer extends TreeViewer {
 	 * @return The prepared {@link ModelCompareInput} for this particular viewer.
 	 * @since 1.3
 	 */
-	protected ModelCompareInput createModelCompareInput(ICompareInputDetailsProvider provider,
-			ComparisonSnapshot snapshot) {
-		if (snapshot instanceof ComparisonResourceSetSnapshot) {
-			return new ModelCompareInput(((ComparisonResourceSetSnapshot)snapshot).getMatchResourceSet(),
-					((ComparisonResourceSetSnapshot)snapshot).getDiffResourceSet(), provider);
-		}
-		return new ModelCompareInput(((ComparisonResourceSnapshot)snapshot).getMatch(),
-				((ComparisonResourceSnapshot)snapshot).getDiff(), provider);
+	protected ModelCompareInput createModelCompareInput(ModelComparator provider) {
+		return new ModelCompareInput(provider.getComparisonResult());
 	}
 
 	/**
@@ -379,10 +365,11 @@ public class ModelStructureMergeViewer extends TreeViewer {
 			public void widgetSelected(SelectionEvent e) {
 				final List<DiffElement> selectedElements = new ArrayList<DiffElement>(getTree()
 						.getSelection().length);
-				for (final TreeItem item : getTree().getSelection())
+				for (final TreeItem item : getTree().getSelection()) {
 					if (item.getData() instanceof DiffElement) {
 						selectedElements.add((DiffElement)item.getData());
 					}
+				}
 				ignoreContentSelection = true;
 				configuration.setProperty(EMFCompareConstants.PROPERTY_STRUCTURE_SELECTION, selectedElements);
 			}
@@ -399,8 +386,8 @@ public class ModelStructureMergeViewer extends TreeViewer {
 
 			public void selectionChanged(SelectionChangedEvent event) {
 				// tree.notifyListeners(eventType, event);
-				configuration.setProperty(EMFCompareConstants.PROPERTY_STRUCTURE_SELECTION,
-						event.getSelection());
+				configuration.setProperty(EMFCompareConstants.PROPERTY_STRUCTURE_SELECTION, event
+						.getSelection());
 			}
 
 		});
@@ -484,9 +471,7 @@ public class ModelStructureMergeViewer extends TreeViewer {
 		@Override
 		public Image getImage(Object object) {
 			Image image = null;
-			if (object instanceof AbstractDiffExtension) {
-				image = (Image)((AbstractDiffExtension)object).getImage();
-			} else if (object instanceof IFile) {
+			if (object instanceof IFile) {
 				image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
 			}
 
@@ -510,9 +495,7 @@ public class ModelStructureMergeViewer extends TreeViewer {
 		@Override
 		public String getText(Object object) {
 			String text = null;
-			if (object instanceof AbstractDiffExtension) {
-				text = ((AbstractDiffExtension)object).getText();
-			} else if (object instanceof IFile) {
+			if (object instanceof IFile) {
 				text = ((IFile)object).getName();
 			} else if (object instanceof Resource) {
 				text = ((Resource)object).getURI().lastSegment();
@@ -547,7 +530,7 @@ public class ModelStructureMergeViewer extends TreeViewer {
 		 */
 		@Override
 		public boolean isEnabled() {
-			final UpdateAttribute element = getUpdateAttribute();
+			final AttributeChange element = getUpdateAttribute();
 			if (element != null) {
 				return element.getAttribute().getEType().getInstanceClass().isAssignableFrom(String.class);
 			}
@@ -563,7 +546,7 @@ public class ModelStructureMergeViewer extends TreeViewer {
 		public void run() {
 			super.run();
 
-			final UpdateAttribute element = getUpdateAttribute();
+			final AttributeChange element = getUpdateAttribute();
 			if (element != null) {
 				if (textDialog != null) {
 					textDialog.setInput(element);

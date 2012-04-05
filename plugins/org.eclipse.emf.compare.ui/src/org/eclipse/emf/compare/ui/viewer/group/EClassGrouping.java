@@ -15,15 +15,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.emf.compare.diff.metamodel.AttributeChange;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.ModelElementChangeLeftTarget;
-import org.eclipse.emf.compare.diff.metamodel.ModelElementChangeRightTarget;
-import org.eclipse.emf.compare.diff.metamodel.ReferenceChange;
-import org.eclipse.emf.compare.diff.metamodel.ResourceDiff;
-import org.eclipse.emf.compare.diff.metamodel.UpdateModelElement;
+import org.eclipse.emf.compare.AttributeChange;
+import org.eclipse.emf.compare.Diff;
+import org.eclipse.emf.compare.ReferenceChange;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.team.core.mapping.provider.ResourceDiff;
 
 /**
  * A facility to group difference elements per kind of changes.
@@ -62,7 +59,7 @@ public class EClassGrouping implements IDifferenceGroupingFacility {
 	 * 
 	 * @see org.eclipse.emf.compare.ui.viewer.group.IDifferenceGroupingFacility#belongsTo(org.eclipse.emf.compare.diff.metamodel.DiffElement)
 	 */
-	public UIDifferenceGroup belongsTo(DiffElement d) {
+	public UIDifferenceGroup belongsTo(Diff d) {
 		UIDifferenceGroup group = UI_DIFFERENCE_GROUP_DEFAULT;
 		if (d instanceof AttributeChange) {
 			final AttributeChange attributeChange = (AttributeChange)d;

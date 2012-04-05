@@ -14,15 +14,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.emf.common.util.TreeIterator;
-import org.eclipse.emf.compare.diff.metamodel.AttributeChange;
-import org.eclipse.emf.compare.diff.metamodel.ConflictingDiffElement;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.DiffGroup;
-import org.eclipse.emf.compare.diff.metamodel.ReferenceChange;
-import org.eclipse.emf.compare.match.metamodel.Match2Elements;
-import org.eclipse.emf.compare.match.metamodel.Match3Elements;
-import org.eclipse.emf.compare.match.metamodel.UnmatchElement;
+import org.eclipse.compare.structuremergeviewer.DiffElement;
+import org.eclipse.emf.compare.AttributeChange;
+import org.eclipse.emf.compare.Comparison;
+import org.eclipse.emf.compare.Diff;
+import org.eclipse.emf.compare.Match;
+import org.eclipse.emf.compare.ReferenceChange;
 import org.eclipse.emf.compare.ui.EMFCompareUIMessages;
 import org.eclipse.emf.compare.ui.ICompareEditorPartListener;
 import org.eclipse.emf.compare.ui.ModelCompareInput;
@@ -139,10 +136,11 @@ public class ModelContentMergeTabFolder {
 	 * 
 	 * @return List of the DiffModel's differences.
 	 */
-	public List<DiffElement> getDiffAsList() {
-		if (parentViewer.getInput() != null)
-			return ((ModelCompareInput)parentViewer.getInput()).getDiffAsList();
-		return new ArrayList<DiffElement>();
+	public List<Diff> getDiffAsList() {
+		if (parentViewer.getInput() instanceof ModelCompareInput) {
+			return ((ModelCompareInput)parentViewer.getInput()).getComparisonSnapshot().getDifferences();
+		}
+		return new ArrayList<Diff>();
 	}
 
 	/**
@@ -170,10 +168,10 @@ public class ModelContentMergeTabFolder {
 	 *            The DiffElement which we need UI variables for.
 	 * @return The item corresponding to the given DiffElement, wrapped along with UI information.
 	 */
-	public ModelContentMergeTabItem getUIItem(DiffElement element) {
+	public ModelContentMergeTabItem getUIItem(Diff element) {
 		final EObject data;
-		if (partSide == EMFCompareConstants.ANCESTOR && element instanceof ConflictingDiffElement) {
-			data = ((ConflictingDiffElement)element).getOriginElement();
+		if (partSide == EMFCompareConstants.ANCESTOR && element.getConflict() != null) {
+			data = element.getMatch().getOrigin();
 		} else if (partSide == EMFCompareConstants.LEFT) {
 			data = EMFCompareEObjectUtils.getLeftElement(element);
 		} else {
@@ -221,8 +219,8 @@ public class ModelContentMergeTabFolder {
 	 * @param diff
 	 *            Item to scroll to.
 	 */
-	public void navigateToDiff(DiffElement diff) {
-		final List<DiffElement> diffs = new ArrayList<DiffElement>();
+	public void navigateToDiff(Diff diff) {
+		final List<Diff> diffs = new ArrayList<Diff>();
 		diffs.add(diff);
 		navigateToDiff(diffs);
 	}
@@ -234,28 +232,24 @@ public class ModelContentMergeTabFolder {
 	 * @param diffs
 	 *            Items to select.
 	 */
-	public void navigateToDiff(List<DiffElement> diffs) {
+	public void navigateToDiff(List<Diff> diffs) {
 		EObject target = null;
 		// finds the object which properties should be found and expands the tree if needed
-		if (partSide == EMFCompareConstants.LEFT) {
-			target = EMFCompareEObjectUtils.getLeftElement(diffs.get(0));
-		} else if (partSide == EMFCompareConstants.RIGHT) {
-			if (diffs.get(0) instanceof DiffGroup
-					&& EMFCompareEObjectUtils.getLeftElement(diffs.get(0)) != null) {
-				target = EMFCompareEObjectUtils.getRightElement(findMatchFromElement(EMFCompareEObjectUtils
-						.getLeftElement(diffs.get(0))));
-			} else if (!(diffs.get(0) instanceof DiffGroup)) {
-				target = EMFCompareEObjectUtils.getRightElement(diffs.get(0));
-			}
-		} else {
-			target = EMFCompareEObjectUtils.getAncestorElement(findMatchFromElement(EMFCompareEObjectUtils
-					.getLeftElement(diffs.get(0))));
-		}
+		// if (partSide == EMFCompareConstants.LEFT) {
+		// target = EMFCompareEObjectUtils.getLeftElement(diffs.get(0));
+		// } else if (partSide == EMFCompareConstants.RIGHT) {
+		// target = EMFCompareEObjectUtils.getRightElement(diffs.get(0));
+		// } else {
+		// target = EMFCompareEObjectUtils.getAncestorElement(findMatchFromElement(EMFCompareEObjectUtils
+		// .getLeftElement(diffs.get(0))));
+		// }
 
-		if (target != null) {
-			// provide input to properties before showing diffs (as properties may be the active tab).
-			properties.setReflectiveInput(findMatchFromElement(target));
-		}
+		// FIXME : navigate from trees to diff.
+
+		// if (target != null) {
+		// // provide input to properties before showing diffs (as properties may be the active tab).
+		// properties.setReflectiveInput(findMatchFromElement(target));
+		// }
 
 		tabs.get(tabFolder.getSelectionIndex()).showItems(diffs);
 
@@ -456,31 +450,12 @@ public class ModelContentMergeTabFolder {
 	 */
 	protected EObject findMatchFromElement(EObject element) {
 		EObject theElement = null;
-		final EObject match = (EObject)((ModelCompareInput)parentViewer.getInput()).getMatch();
+		final Comparison match = ((ModelCompareInput)parentViewer.getInput()).getComparisonSnapshot();
 
-		final TreeIterator<EObject> iterator = match.eAllContents();
-		while (iterator.hasNext()) {
-			final Object object = iterator.next();
-
-			if (object instanceof Match3Elements) {
-				final Match3Elements matchElement = (Match3Elements)object;
-				if (matchElement.getLeftElement().equals(element)
-						|| matchElement.getRightElement().equals(element)
-						|| matchElement.getOriginElement().equals(element)) {
-					theElement = matchElement;
-				}
-			} else if (object instanceof Match2Elements) {
-				final Match2Elements matchElement = (Match2Elements)object;
-				if (matchElement.getLeftElement().equals(element)
-						|| matchElement.getRightElement().equals(element)) {
-					theElement = matchElement;
-				}
-			} else if (object instanceof UnmatchElement) {
-				final UnmatchElement unmatchElement = (UnmatchElement)object;
-				if (unmatchElement.getElement().equals(element)) {
-					theElement = unmatchElement;
-				}
-			}
+		if (element instanceof Match) {
+			return element;
+		} else if (element instanceof Diff) {
+			return ((Diff)element).getMatch();
 		}
 
 		return theElement;
@@ -633,13 +608,13 @@ public class ModelContentMergeTabFolder {
 			public void widgetSelected(SelectionEvent e) {
 				if (tree.getSelectedElements().size() > 0) {
 					final Item selected = tree.getSelectedElements().get(0);
-					for (final DiffElement diff : ((ModelCompareInput)parentViewer.getInput())
-							.getDiffAsList()) {
-						if (!(diff instanceof DiffGroup) && partSide == EMFCompareConstants.LEFT) {
+					for (final Diff diff : ((ModelCompareInput)parentViewer.getInput())
+							.getComparisonSnapshot().getDifferences()) {
+						if (partSide == EMFCompareConstants.LEFT) {
 							if (selected.getData().equals(EMFCompareEObjectUtils.getLeftElement(diff))) {
 								parentViewer.setSelection(diff);
 							}
-						} else if (!(diff instanceof DiffGroup) && partSide == EMFCompareConstants.RIGHT) {
+						} else if (partSide == EMFCompareConstants.RIGHT) {
 							if (selected.getData().equals(EMFCompareEObjectUtils.getRightElement(diff))) {
 								parentViewer.setSelection(diff);
 							}

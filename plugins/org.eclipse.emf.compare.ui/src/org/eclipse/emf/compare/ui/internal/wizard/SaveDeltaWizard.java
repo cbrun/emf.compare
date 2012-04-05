@@ -11,17 +11,15 @@
 package org.eclipse.emf.compare.ui.internal.wizard;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Locale;
+import java.util.Collections;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.emf.compare.EMFComparePlugin;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSetSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.DiffFactory;
-import org.eclipse.emf.compare.util.ModelUtils;
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.compare.Comparison;
+import org.eclipse.emf.compare.ui.EMFCompareUIPlugin;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.util.EcoreUtil;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceImpl;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.dialogs.WizardNewFileCreationPage;
@@ -41,7 +39,7 @@ public class SaveDeltaWizard extends BasicNewFileResourceWizard {
 	private final String fileExtension;
 
 	/** Result of the comparison this wizard is meant to save. */
-	private ComparisonSnapshot input;
+	private Comparison input;
 
 	/**
 	 * Creates a new file wizard given the file extension to use.
@@ -80,7 +78,7 @@ public class SaveDeltaWizard extends BasicNewFileResourceWizard {
 	 * @param inputSnapshot
 	 *            The {@link ComparisonSnapshot} to save.
 	 */
-	public void init(IWorkbench workbench, ComparisonSnapshot inputSnapshot) {
+	public void init(IWorkbench workbench, Comparison inputSnapshot) {
 		super.init(workbench, new StructuredSelection());
 		// ensures no modification will be made to the input
 		input = EcoreUtil.copy(inputSnapshot);
@@ -104,25 +102,12 @@ public class SaveDeltaWizard extends BasicNewFileResourceWizard {
 		final IFile createdFile = ((WizardNewFileCreationPage)getPage(page)).createNewFile();
 		if (createdFile != null) {
 			try {
-				if (input instanceof ComparisonResourceSnapshot) {
-					final ComparisonResourceSnapshot modelInputSnapshot = DiffFactory.eINSTANCE
-							.createComparisonResourceSnapshot();
-					modelInputSnapshot.setDiff(((ComparisonResourceSnapshot)input).getDiff());
-					modelInputSnapshot.setMatch(((ComparisonResourceSnapshot)input).getMatch());
-					modelInputSnapshot.setDate(Calendar.getInstance(Locale.getDefault()).getTime());
-					ModelUtils.save(modelInputSnapshot, createdFile.getLocation().toOSString());
-				} else {
-					final ComparisonResourceSetSnapshot modelInputSnapshot = DiffFactory.eINSTANCE
-							.createComparisonResourceSetSnapshot();
-					modelInputSnapshot.setDiffResourceSet(((ComparisonResourceSetSnapshot)input)
-							.getDiffResourceSet());
-					modelInputSnapshot.setMatchResourceSet(((ComparisonResourceSetSnapshot)input)
-							.getMatchResourceSet());
-					modelInputSnapshot.setDate(Calendar.getInstance(Locale.getDefault()).getTime());
-					ModelUtils.save(modelInputSnapshot, createdFile.getLocation().toOSString());
-				}
+				Resource res = new XMIResourceImpl(URI.createFileURI(createdFile.getLocation().toOSString()));
+				res.getContents().add(input);
+				res.save(Collections.EMPTY_MAP);
+
 			} catch (final IOException e) {
-				EMFComparePlugin.log(e, false);
+				EMFCompareUIPlugin.log(e, false);
 			}
 			result = true;
 		}

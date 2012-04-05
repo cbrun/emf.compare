@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.editor;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
@@ -21,13 +19,7 @@ import org.eclipse.compare.Splitter;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.ICompareInputChangeListener;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.compare.EMFComparePlugin;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSetSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonResourceSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.ComparisonSnapshot;
-import org.eclipse.emf.compare.diff.metamodel.DiffPackage;
-import org.eclipse.emf.compare.match.metamodel.MatchPackage;
+import org.eclipse.emf.compare.Comparison;
 import org.eclipse.emf.compare.ui.ModelCompareInput;
 import org.eclipse.emf.compare.ui.internal.ModelComparator;
 import org.eclipse.emf.compare.ui.viewer.content.ModelContentMergeViewer;
@@ -37,7 +29,6 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.EcoreUtil.CrossReferencer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
@@ -56,7 +47,7 @@ public class ModelCompareEditorInput extends CompareEditorInput {
 	protected ModelContentMergeViewer contentMergeViewer;
 
 	/** {@link ComparisonSnapshot} result of the underlying comparison. */
-	protected final ComparisonSnapshot inputSnapshot;
+	protected final Comparison inputSnapshot;
 
 	/** This is the input that will be used throughout. */
 	protected ModelCompareInput preparedInput;
@@ -79,7 +70,7 @@ public class ModelCompareEditorInput extends CompareEditorInput {
 	 * @param snapshot
 	 *            The {@link ComparisonSnapshot} loaded from an emfdiff.
 	 */
-	public ModelCompareEditorInput(ComparisonSnapshot snapshot) {
+	public ModelCompareEditorInput(Comparison snapshot) {
 		super(new CompareConfiguration());
 		inputSnapshot = snapshot;
 
@@ -99,24 +90,27 @@ public class ModelCompareEditorInput extends CompareEditorInput {
 	 */
 	@Override
 	public void saveChanges(IProgressMonitor monitor) {
-		if (preparedInput.getLeftResource() != null) {
-			final ResourceSet rs = preparedInput.getLeftResource().getResourceSet();
-			if (rs == null)
-				safeSave(preparedInput.getLeftResource());
-			else
-				for (Resource res : rs.getResources()) {
-					safeSave(res);
-				}
-		}
-		if (preparedInput.getRightResource() != null) {
-			final ResourceSet rs = preparedInput.getRightResource().getResourceSet();
-			if (rs == null)
-				safeSave(preparedInput.getRightResource());
-			else
-				for (Resource res : rs.getResources()) {
-					safeSave(res);
-				}
-		}
+		// if (preparedInput.getLeftResource() != null) {
+		// final ResourceSet rs = preparedInput.getLeftResource().getResourceSet();
+		// if (rs == null) {
+		// safeSave(preparedInput.getLeftResource());
+		// } else {
+		// for (Resource res : rs.getResources()) {
+		// safeSave(res);
+		// }
+		// }
+		// }
+		// if (preparedInput.getRightResource() != null) {
+		// final ResourceSet rs = preparedInput.getRightResource().getResourceSet();
+		// if (rs == null) {
+		// safeSave(preparedInput.getRightResource());
+		// } else {
+		// for (Resource res : rs.getResources()) {
+		// safeSave(res);
+		// }
+		// }
+		// }
+		// FIXME save
 	}
 
 	/**
@@ -126,11 +120,11 @@ public class ModelCompareEditorInput extends CompareEditorInput {
 	 *            The resource that is to be saved.
 	 */
 	private void safeSave(Resource res) {
-		try {
-			res.save(Collections.EMPTY_MAP);
-		} catch (IOException e) {
-			EMFComparePlugin.log(e.getMessage(), false);
-		}
+		// try {
+		// res.save(Collections.EMPTY_MAP);
+		// } catch (IOException e) {
+		// EMFCompareUIPlugin.log(e.getMessage(), false);
+		// }
 	}
 
 	/**
@@ -202,10 +196,8 @@ public class ModelCompareEditorInput extends CompareEditorInput {
 	 */
 	@Override
 	protected Object prepareInput(IProgressMonitor monitor) {
-		resolveAll(inputSnapshot);
 		preparedInput = createModelCompareInput(inputSnapshot);
-		final ModelComparator comparator = ModelComparator.getComparator(getCompareConfiguration(),
-				preparedInput);
+		final ModelComparator comparator = ModelComparator.getComparator(getCompareConfiguration());
 		comparator.setComparisonResult(inputSnapshot);
 		preparedInput.addCompareInputChangeListener(inputListener);
 		return preparedInput;
@@ -218,29 +210,8 @@ public class ModelCompareEditorInput extends CompareEditorInput {
 	 *            Snapshot of the current comparison.
 	 * @return The prepared ModelCompareInput for this editor input.
 	 */
-	protected ModelCompareInput createModelCompareInput(final ComparisonSnapshot snap) {
-		if (snap instanceof ComparisonResourceSetSnapshot) {
-			return new ModelCompareInput(((ComparisonResourceSetSnapshot)snap).getMatchResourceSet(),
-					((ComparisonResourceSetSnapshot)snap).getDiffResourceSet());
-		}
-		return new ModelCompareInput(((ComparisonResourceSnapshot)snap).getMatch(),
-				((ComparisonResourceSnapshot)snap).getDiff());
-	}
-
-	/**
-	 * This will resolve all proxies of the given snapshot, dispatching references to two (three) distinct
-	 * ResourceSets as needed for left, right (and ancestor) references.
-	 * 
-	 * @param snapshot
-	 *            Snapshot which links are to be resolved.
-	 */
-	private void resolveAll(ComparisonSnapshot snapshot) {
-		final ResourceSet left = new ResourceSetImpl();
-		final ResourceSet right = new ResourceSetImpl();
-		final ResourceSet ancestor = new ResourceSetImpl();
-
-		// The cross referencer resolves all proxies by visiting them
-		new DispatchingCrossReferencer(snapshot, left, right, ancestor);
+	protected ModelCompareInput createModelCompareInput(final Comparison snap) {
+		return new ModelCompareInput(snap);
 	}
 
 	/**
@@ -301,49 +272,51 @@ public class ModelCompareEditorInput extends CompareEditorInput {
 		 */
 		@Override
 		protected boolean crossReference(EObject object, EReference reference, EObject crossReferencedEObject) {
-			boolean result;
-			if (crossReferencedEObject.eIsProxy()) {
-				final URI proxyURI = ((InternalEObject)crossReferencedEObject).eProxyURI();
-				EObject leftReference = leftRS.getEObject(proxyURI, false);
-				EObject rightReference = rightRS.getEObject(proxyURI, false);
-				EObject ancestorReference = ancestorRS.getEObject(proxyURI, false);
-
-				boolean resolved = false;
-				if (reference == MatchPackage.eINSTANCE.getMatchModel_LeftRoots()
-						|| reference == DiffPackage.eINSTANCE.getDiffModel_LeftRoots()) {
-					leftReference = leftRS.getEObject(proxyURI, true);
-					if (leftReference != null) {
-						resolved = true;
-						crossReferenceResolvedObject(object, reference, crossReferencedEObject, leftReference);
-					}
-				} else if (reference == MatchPackage.eINSTANCE.getMatchModel_RightRoots()
-						|| reference == DiffPackage.eINSTANCE.getDiffModel_RightRoots()) {
-					rightReference = rightRS.getEObject(proxyURI, true);
-					if (rightReference != null) {
-						resolved = true;
-						crossReferenceResolvedObject(object, reference, crossReferencedEObject,
-								rightReference);
-					}
-				} else if (reference == MatchPackage.eINSTANCE.getMatchModel_AncestorRoots()
-						|| reference == DiffPackage.eINSTANCE.getDiffModel_AncestorRoots()) {
-					ancestorReference = ancestorRS.getEObject(proxyURI, true);
-					if (ancestorReference != null) {
-						resolved = true;
-						crossReferenceResolvedObject(object, reference, crossReferencedEObject,
-								ancestorReference);
-					}
-				}
-
-				if (resolved) {
-					// We'll return false : our resolved object to be crossReferenced, the proxy must not be
-					result = false;
-				} else {
-					result = super.crossReference(object, reference, crossReferencedEObject);
-				}
-			} else {
-				result = super.crossReference(object, reference, crossReferencedEObject);
-			}
-			return result;
+			// boolean result;
+			// if (crossReferencedEObject.eIsProxy()) {
+			// final URI proxyURI = ((InternalEObject)crossReferencedEObject).eProxyURI();
+			// EObject leftReference = leftRS.getEObject(proxyURI, false);
+			// EObject rightReference = rightRS.getEObject(proxyURI, false);
+			// EObject ancestorReference = ancestorRS.getEObject(proxyURI, false);
+			//
+			// boolean resolved = false;
+			// if (reference == MatchPackage.eINSTANCE.getMatchModel_LeftRoots()
+			// || reference == DiffPackage.eINSTANCE.getDiffModel_LeftRoots()) {
+			// leftReference = leftRS.getEObject(proxyURI, true);
+			// if (leftReference != null) {
+			// resolved = true;
+			// crossReferenceResolvedObject(object, reference, crossReferencedEObject, leftReference);
+			// }
+			// } else if (reference == MatchPackage.eINSTANCE.getMatchModel_RightRoots()
+			// || reference == DiffPackage.eINSTANCE.getDiffModel_RightRoots()) {
+			// rightReference = rightRS.getEObject(proxyURI, true);
+			// if (rightReference != null) {
+			// resolved = true;
+			// crossReferenceResolvedObject(object, reference, crossReferencedEObject,
+			// rightReference);
+			// }
+			// } else if (reference == MatchPackage.eINSTANCE.getMatchModel_AncestorRoots()
+			// || reference == DiffPackage.eINSTANCE.getDiffModel_AncestorRoots()) {
+			// ancestorReference = ancestorRS.getEObject(proxyURI, true);
+			// if (ancestorReference != null) {
+			// resolved = true;
+			// crossReferenceResolvedObject(object, reference, crossReferencedEObject,
+			// ancestorReference);
+			// }
+			// }
+			//
+			// if (resolved) {
+			// // We'll return false : our resolved object to be crossReferenced, the proxy must not be
+			// result = false;
+			// } else {
+			// result = super.crossReference(object, reference, crossReferencedEObject);
+			// }
+			// } else {
+			// result = super.crossReference(object, reference, crossReferencedEObject);
+			// }
+			// return result;
+			// FIXME handle cross referencing and proxy resolution.
+			return true;
 		}
 
 		/**

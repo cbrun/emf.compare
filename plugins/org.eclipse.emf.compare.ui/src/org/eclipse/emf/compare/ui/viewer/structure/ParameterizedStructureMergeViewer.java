@@ -28,7 +28,6 @@ import org.eclipse.emf.compare.ui.viewer.group.DifferenceGroupingFacilityDescrip
 import org.eclipse.emf.compare.ui.viewer.group.DifferenceGroupingFacilityRegistry;
 import org.eclipse.emf.compare.ui.viewer.group.GroupsMenu;
 import org.eclipse.emf.compare.ui.viewer.group.IDifferenceGroupingFacility;
-import org.eclipse.emf.compare.util.EMFComparePreferenceConstants;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -78,8 +77,8 @@ public class ParameterizedStructureMergeViewer extends ModelStructureMergeViewer
 	 */
 	@Override
 	protected ModelStructureContentProvider createContentProvider(CompareConfiguration compareConfiguration) {
-		final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore()
-				.getString(EMFComparePreferenceConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
+		final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore().getString(
+				EMFCompareConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
 		final ParameterizedStructureContentProvider contentProvider = buildContentProvider(compareConfiguration);
 		orderingSelectionListener = new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
@@ -139,8 +138,8 @@ public class ParameterizedStructureMergeViewer extends ModelStructureMergeViewer
 
 		if (DifferenceGroupingFacilityRegistry.INSTANCE.getDescriptors().size() > 0) {
 			final GroupsMenu groupsMenu = new GroupsMenu(this);
-			final ImageDescriptor imgDesc = PlatformUI.getWorkbench().getSharedImages()
-					.getImageDescriptor(ISharedImages.IMG_OBJ_FOLDER);
+			final ImageDescriptor imgDesc = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(
+					ISharedImages.IMG_OBJ_FOLDER);
 			groupsMenu.setImageDescriptor(imgDesc);
 			tbm.appendToGroup(orderingGroupName, groupsMenu);
 		}
@@ -188,8 +187,8 @@ public class ParameterizedStructureMergeViewer extends ModelStructureMergeViewer
 	 * @since 1.3
 	 */
 	protected List<IDifferenceFilter> getDefaultFilters() {
-		final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore()
-				.getString(EMFComparePreferenceConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
+		final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore().getString(
+				EMFCompareConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
 		return DifferenceFilterRegistry.INSTANCE.getFilters(preferenceValue);
 	}
 

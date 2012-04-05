@@ -11,6 +11,7 @@
 package org.eclipse.emf.compare.ui;
 
 import org.eclipse.compare.ITypedElement;
+import org.eclipse.emf.common.notify.Notifier;
 import org.eclipse.emf.compare.ui.util.EMFCompareEObjectUtils;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.swt.graphics.Image;
@@ -22,7 +23,7 @@ import org.eclipse.swt.graphics.Image;
  */
 public class TypedElementWrapper implements ITypedElement {
 	/** {@link EObject} this wrapper is build upon. */
-	private final EObject wrappedObject;
+	private final Notifier wrappedObject;
 
 	/**
 	 * Constructs an instance given the object to wrap.
@@ -30,7 +31,7 @@ public class TypedElementWrapper implements ITypedElement {
 	 * @param eObject
 	 *            Object to wrap as an {@link ITypedElement}.
 	 */
-	public TypedElementWrapper(EObject eObject) {
+	public TypedElementWrapper(Notifier eObject) {
 		wrappedObject = eObject;
 	}
 
@@ -57,7 +58,7 @@ public class TypedElementWrapper implements ITypedElement {
 	 * 
 	 * @return The object wrapped within this {@link TypedElementWrapper}.
 	 */
-	public EObject getObject() {
+	public Notifier getObject() {
 		return wrappedObject;
 	}
 

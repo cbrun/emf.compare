@@ -13,8 +13,7 @@ package org.eclipse.emf.compare.ui.util;
 import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.DiffGroup;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.viewer.filter.IDifferenceFilter;
 
 /**
@@ -43,14 +42,14 @@ public final class OrderingUtils {
 	 *            The selected filters.
 	 * @return true if it is hidden, false otherwise.
 	 */
-	public static boolean isHidden(DiffElement element, List<IDifferenceFilter> selectedFilters) {
+	public static boolean isHidden(Diff element, List<IDifferenceFilter> selectedFilters) {
 		if (selectedFilters != null) {
 			final Iterator<IDifferenceFilter> it = selectedFilters.iterator();
 			while (it.hasNext()) {
 				final IDifferenceFilter diffFilter = it.next();
 				// We do not support filtering of DiffGroup
 				// (as its DifferenceKind is always "Change" -- see DiffElementImpl#getKind() for how)
-				if (!(element instanceof DiffGroup) && diffFilter.hides(element)) {
+				if (diffFilter.hides(element)) {
 					return true;
 				}
 			}

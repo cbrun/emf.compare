@@ -10,22 +10,17 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.viewer.content;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
+import com.google.common.collect.Lists;
+
+import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.contentmergeviewer.IMergeViewerContentProvider;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.compare.EMFComparePlugin;
-import org.eclipse.emf.compare.diff.metamodel.DiffModel;
-import org.eclipse.emf.compare.diff.metamodel.DiffResourceSet;
-import org.eclipse.emf.compare.match.metamodel.Side;
+import org.eclipse.emf.common.notify.Notifier;
+import org.eclipse.emf.compare.Match;
+import org.eclipse.emf.compare.MatchResource;
 import org.eclipse.emf.compare.ui.ModelCompareInput;
-import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.graphics.Image;
 
@@ -73,23 +68,21 @@ public class ModelContentMergeContentProvider implements IMergeViewerContentProv
 		Object content = null;
 		if (element instanceof ModelCompareInput) {
 			// if we compared a complete resource set, we should display the different resources
-			final Object diff = ((ModelCompareInput)element).getDiff();
-			final Resource res = ((ModelCompareInput)element).getAncestorResource();
-			if (diff instanceof DiffResourceSet) {
-				if (res != null && res.getResourceSet() != null) {
-					content = new ArrayList<Resource>(res.getResourceSet().getResources());
-				} else {
-					content = ((ModelCompareInput)element).getAncestor();
-				}
-			} else if (diff instanceof DiffModel) {
-				if (res == null) {
-					content = ((ModelCompareInput)element).getAncestor();
-				} else {
-					content = res;
+			List<Notifier> result = Lists.newArrayList();
+			for (MatchResource match : ((ModelCompareInput)element).getComparisonSnapshot()
+					.getMatchedResources()) {
+				if (match.getOrigin() != null) {
+					result.add(match.getOrigin());
 				}
 			}
-		} else if (element instanceof ICompareInput)
+			for (Match match : ((ModelCompareInput)element).getComparisonSnapshot().getMatches()) {
+				if (match.getOrigin() != null) {
+					result.add(match.getOrigin());
+				}
+			}
+		} else if (element instanceof ICompareInput) {
 			content = ((ICompareInput)element).getAncestor();
+		}
 		return content;
 	}
 
@@ -121,61 +114,22 @@ public class ModelContentMergeContentProvider implements IMergeViewerContentProv
 		Object content = null;
 		if (element instanceof ModelCompareInput) {
 			// if we compared a complete resource set, we should display the different resources
-			final Object diff = ((ModelCompareInput)element).getDiff();
-			final Resource res = ((ModelCompareInput)element).getLeftResource();
-			if (diff instanceof DiffResourceSet) {
-				if (res != null && res.getResourceSet() != null) {
-					content = new ArrayList<Resource>(res.getResourceSet().getResources());
-				} else {
-					content = ((ModelCompareInput)element).getLeft();
+			List<Notifier> result = Lists.newArrayList();
+			for (MatchResource match : ((ModelCompareInput)element).getComparisonSnapshot()
+					.getMatchedResources()) {
+				if (match.getLeft() != null) {
+					result.add(match.getLeft());
 				}
-			} else if (diff instanceof DiffModel) {
-				if (res == null) {
-					content = ((ModelCompareInput)element).getLeft();
-				} else {
-					content = res;
+			}
+			for (Match match : ((ModelCompareInput)element).getComparisonSnapshot().getMatches()) {
+				if (match.getLeft() != null) {
+					result.add(match.getLeft());
 				}
 			}
 		} else if (element instanceof ICompareInput) {
 			content = ((ICompareInput)element).getLeft();
 		}
 		return content;
-	}
-
-	/**
-	 * Checks whether the given resource does contain changes on the respective side of the given diff
-	 * resource set.
-	 * 
-	 * @param res
-	 *            the resource that is being checked.
-	 * @param diffResourceSet
-	 *            the resource that that is to be tested for changes to the given resource
-	 * @param side
-	 *            the side of the diff resource set that is to be evaluated.
-	 * @return <code>true</code> if the resource has related changes, <code>false</code> otherwise.
-	 */
-	private boolean hasChanged(Resource res, DiffResourceSet diffResourceSet, Side side) {
-		boolean changed = false;
-		final Iterator<DiffModel> diffIterator = diffResourceSet.getDiffModels().iterator();
-		while (!changed && diffIterator.hasNext()) {
-			final DiffModel diffModel = diffIterator.next();
-			// diff model does not have ref to its covered resource, so
-			// we have to indirectly check if the diff models root are within the contents of the resource
-			if (side == Side.LEFT) {
-				if (res.getContents().containsAll(diffModel.getLeftRoots())) {
-					changed = diffModel.getSubchanges() != 0;
-				}
-			} else if (side == Side.RIGHT) {
-				if (res.getContents().containsAll(diffModel.getRightRoots())) {
-					changed = diffModel.getSubchanges() != 0;
-				}
-			} else { // ancestor side
-				if (res.getContents().containsAll(diffModel.getAncestorRoots())) {
-					changed = diffModel.getSubchanges() != 0;
-				}
-			}
-		}
-		return changed;
 	}
 
 	/**
@@ -206,23 +160,21 @@ public class ModelContentMergeContentProvider implements IMergeViewerContentProv
 		Object content = null;
 		if (element instanceof ModelCompareInput) {
 			// if we compared a complete resource set, we should display the different resources
-			final Object diff = ((ModelCompareInput)element).getDiff();
-			final Resource res = ((ModelCompareInput)element).getRightResource();
-			if (diff instanceof DiffResourceSet) {
-				if (res != null && res.getResourceSet() != null) {
-					content = new ArrayList<Resource>(res.getResourceSet().getResources());
-				} else {
-					content = ((ModelCompareInput)element).getRight();
-				}
-			} else if (diff instanceof DiffModel) {
-				if (res == null) {
-					content = ((ModelCompareInput)element).getRight();
-				} else {
-					content = res;
+			List<Notifier> result = Lists.newArrayList();
+			for (MatchResource match : ((ModelCompareInput)element).getComparisonSnapshot()
+					.getMatchedResources()) {
+				if (match.getRight() != null) {
+					result.add(match.getRight());
 				}
 			}
-		} else if (element instanceof ICompareInput)
+			for (Match match : ((ModelCompareInput)element).getComparisonSnapshot().getMatches()) {
+				if (match.getRight() != null) {
+					result.add(match.getRight());
+				}
+			}
+		} else if (element instanceof ICompareInput) {
 			content = ((ICompareInput)element).getRight();
+		}
 		return content;
 	}
 
@@ -282,36 +234,7 @@ public class ModelContentMergeContentProvider implements IMergeViewerContentProv
 		// FIXME automatic saves
 		if (element instanceof ModelCompareInput) {
 			final ModelCompareInput input = (ModelCompareInput)element;
-			if (input.getLeftResource() != null) {
-				final ResourceSet rs = input.getLeftResource().getResourceSet();
-				if (rs == null) {
-					safeSave(input.getLeftResource());
-				} else {
-					for (Resource res : rs.getResources()) {
-						safeSave(res);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Saves the given resource while catching and logging potential exceptiions.
-	 * 
-	 * @param res
-	 *            The resource that is to be saved.
-	 */
-	private void safeSave(Resource res) {
-		final URI uri = res.getURI();
-		if (uri.isPlatformPlugin() || uri.scheme().startsWith("http") //$NON-NLS-1$
-				|| uri.scheme().startsWith("pathmap")) { //$NON-NLS-1$
-			return;
-		}
-
-		try {
-			res.save(Collections.EMPTY_MAP);
-		} catch (IOException e) {
-			EMFComparePlugin.log(e.getMessage(), false);
+			input.saveLeft(bytes);
 		}
 	}
 
@@ -325,16 +248,7 @@ public class ModelContentMergeContentProvider implements IMergeViewerContentProv
 		// FIXME automatic saves
 		if (element instanceof ModelCompareInput) {
 			final ModelCompareInput input = (ModelCompareInput)element;
-			if (input.getRightResource() != null) {
-				final ResourceSet rs = input.getRightResource().getResourceSet();
-				if (rs == null) {
-					safeSave(input.getRightResource());
-				} else {
-					for (Resource res : rs.getResources()) {
-						safeSave(res);
-					}
-				}
-			}
+			input.saveRight(bytes);
 		}
 	}
 
@@ -344,8 +258,9 @@ public class ModelContentMergeContentProvider implements IMergeViewerContentProv
 	 * @see org.eclipse.compare.contentmergeviewer.IMergeViewerContentProvider#showAncestor(java.lang.Object)
 	 */
 	public boolean showAncestor(Object element) {
-		if (element instanceof ICompareInput)
+		if (element instanceof ICompareInput) {
 			return true;
+		}
 		return false;
 	}
 }

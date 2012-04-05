@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.viewer.content.part;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.emf.compare.Diff;
 import org.eclipse.emf.compare.ui.util.EMFCompareConstants;
 import org.eclipse.swt.widgets.Item;
 
@@ -40,7 +40,7 @@ public final class ModelContentMergeTabItem {
 	private int curveY;
 
 	/** Holds a reference to the difference represented by the wrapped item. */
-	private final DiffElement difference;
+	private final Diff difference;
 
 	/** The visible item on which will be drawn UI marquees. */
 	private Item visibleItem;
@@ -62,7 +62,7 @@ public final class ModelContentMergeTabItem {
 	 * @param drawingColor
 	 *            Key of the color to use when drawing UI components for this item.
 	 */
-	public ModelContentMergeTabItem(DiffElement diff, Item actual, Item visible, String drawingColor) {
+	public ModelContentMergeTabItem(Diff diff, Item actual, Item visible, String drawingColor) {
 		this(diff, actual, visible, drawingColor, -1, -1);
 	}
 
@@ -85,15 +85,16 @@ public final class ModelContentMergeTabItem {
 	 * @param curveExpectedSize
 	 *            Size of the center curve for this item.
 	 */
-	public ModelContentMergeTabItem(DiffElement diff, Item actual, Item visible, String drawingColor,
+	public ModelContentMergeTabItem(Diff diff, Item actual, Item visible, String drawingColor,
 			int curveExpectedY, int curveExpectedSize) {
 		difference = diff;
 		actualItem = actual;
 		visibleItem = visible;
-		if (drawingColor == null)
+		if (drawingColor == null) {
 			curveColorID = EMFCompareConstants.PREFERENCES_KEY_CHANGED_COLOR;
-		else
+		} else {
 			curveColorID = drawingColor;
+		}
 		curveY = curveExpectedY;
 		curveSize = curveExpectedSize;
 	}
@@ -109,7 +110,7 @@ public final class ModelContentMergeTabItem {
 	 * @param drawingColor
 	 *            Key of the color to use when drawing UI components for this item.
 	 */
-	public ModelContentMergeTabItem(DiffElement diff, Item actual, String drawingColor) {
+	public ModelContentMergeTabItem(Diff diff, Item actual, String drawingColor) {
 		this(diff, actual, actual, drawingColor, -1, -1);
 	}
 
@@ -166,7 +167,7 @@ public final class ModelContentMergeTabItem {
 	 * 
 	 * @return The represented difference.
 	 */
-	public DiffElement getDiff() {
+	public Diff getDiff() {
 		return difference;
 	}
 

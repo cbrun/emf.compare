@@ -16,11 +16,9 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.emf.common.notify.AdapterFactory;
-import org.eclipse.emf.compare.match.metamodel.Match2Elements;
-import org.eclipse.emf.compare.match.metamodel.Match3Elements;
-import org.eclipse.emf.compare.match.metamodel.UnmatchElement;
+import org.eclipse.emf.compare.Match;
+import org.eclipse.emf.compare.ui.AdapterUtils;
 import org.eclipse.emf.compare.ui.util.EMFCompareConstants;
-import org.eclipse.emf.compare.util.AdapterUtils;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.emf.edit.provider.IItemPropertyDescriptor;
@@ -65,18 +63,16 @@ public class PropertyContentProvider implements IStructuredContentProvider {
 	public Object[] getElements(Object inputElement) {
 		Object[] elements = new Object[] {};
 
-		if (inputElement instanceof Match2Elements) {
-			final Match2Elements match = (Match2Elements)inputElement;
+		if (inputElement instanceof Match) {
+			final Match match = (Match)inputElement;
 
 			if (partSide == EMFCompareConstants.LEFT) {
-				inputEObject = match.getLeftElement();
+				inputEObject = match.getLeft();
 			} else if (partSide == EMFCompareConstants.RIGHT) {
-				inputEObject = match.getRightElement();
-			} else if (inputElement instanceof Match3Elements) {
-				inputEObject = ((Match3Elements)match).getOriginElement();
+				inputEObject = match.getRight();
+			} else if (((Match)inputElement).getOrigin() != null) {
+				inputEObject = match.getOrigin();
 			}
-		} else if (inputElement instanceof UnmatchElement) {
-			inputEObject = ((UnmatchElement)inputElement).getElement();
 		}
 		if (inputEObject != null) {
 			final List<List<Object>> inputElements = new ArrayList<List<Object>>();

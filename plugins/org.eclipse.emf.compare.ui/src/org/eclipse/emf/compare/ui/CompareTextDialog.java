@@ -26,13 +26,11 @@ import org.eclipse.compare.internal.MergeViewerContentProvider;
 import org.eclipse.compare.structuremergeviewer.DiffNode;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.emf.compare.FactoryException;
-import org.eclipse.emf.compare.diff.metamodel.ConflictingDiffElement;
-import org.eclipse.emf.compare.diff.metamodel.UpdateAttribute;
+import org.eclipse.emf.compare.AttributeChange;
 import org.eclipse.emf.compare.ui.viewer.structure.ModelStructureMergeViewer;
-import org.eclipse.emf.compare.util.EFactory;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -65,7 +63,7 @@ public class CompareTextDialog extends TrayDialog {
 	protected EAttribute attribute;
 
 	/** The current comparison element. */
-	protected UpdateAttribute changeCompare;
+	protected AttributeChange changeCompare;
 
 	/** The compare configuration of the parent viewer. */
 	protected CompareConfiguration parentConfiguration;
@@ -184,7 +182,7 @@ public class CompareTextDialog extends TrayDialog {
 	 * @param element
 	 *            The current comparison element.
 	 */
-	public CompareTextDialog(Shell parentShell, UpdateAttribute element) {
+	public CompareTextDialog(Shell parentShell, AttributeChange element) {
 		super(parentShell);
 		setShellStyle(getShellStyle() & ~SWT.APPLICATION_MODAL | SWT.TOOL);
 		setChangeCompare(element);
@@ -202,7 +200,7 @@ public class CompareTextDialog extends TrayDialog {
 	 * @param input
 	 *            The input of the parent viewer.
 	 */
-	public CompareTextDialog(Shell parentShell, UpdateAttribute element,
+	public CompareTextDialog(Shell parentShell, AttributeChange element,
 			ModelStructureMergeViewer parentViewer, Object input) {
 		this(parentShell, element);
 		parentConfiguration = parentViewer.getCompareConfiguration();
@@ -225,11 +223,11 @@ public class CompareTextDialog extends TrayDialog {
 	 * @param updateAttribute
 	 *            The attribute from which to retrieve values.
 	 */
-	private void setChangeCompare(UpdateAttribute updateAttribute) {
+	private void setChangeCompare(AttributeChange updateAttribute) {
 		changeCompare = updateAttribute;
 
 		attribute = updateAttribute.getAttribute();
-		isConflicting = updateAttribute.isConflicting();
+		isConflicting = updateAttribute.getConflict() != null;
 
 		setStringValues(updateAttribute);
 
@@ -242,39 +240,54 @@ public class CompareTextDialog extends TrayDialog {
 	 * @param updateAttribute
 	 *            The attribute from which to retrieve values.
 	 */
-	private void setStringValues(UpdateAttribute updateAttribute) {
-		final EObject oRightElement = updateAttribute.getRightElement();
-		final EObject oLeftElement = updateAttribute.getLeftElement();
+	private void setStringValues(AttributeChange updateAttribute) {
+		final EObject oRightElement = updateAttribute.getMatch().getRight();
+		final EObject oLeftElement = updateAttribute.getMatch().getLeft();
 
-		final EObject parent = updateAttribute.eContainer();
-
-		try {
-
-			if (parent instanceof ConflictingDiffElement) {
-				final ConflictingDiffElement conflict = (ConflictingDiffElement)parent;
-				final EObject oAncestorElement = conflict.getOriginElement();
-				if (oAncestorElement != null)
-					ancestorElement = EFactory.eGetAsString(oAncestorElement, attribute.getName());
+		if (updateAttribute.getConflict() != null) {
+			final EObject oAncestorElement = updateAttribute.getMatch().getOrigin();
+			if (oAncestorElement != null) {
+				ancestorElement = eGetAsString(oAncestorElement, attribute.getName());
 			}
+		}
 
-			if (oRightElement != null)
-				rightElement = EFactory.eGetAsString(oRightElement, attribute.getName());
-			if (oLeftElement != null)
-				leftElement = EFactory.eGetAsString(oLeftElement, attribute.getName());
+		if (oRightElement != null) {
+			rightElement = eGetAsString(oRightElement, attribute.getName());
+		}
+		if (oLeftElement != null) {
+			leftElement = eGetAsString(oLeftElement, attribute.getName());
+		}
 
-			if (rightElement == null)
-				rightElement = ""; //$NON-NLS-1$
-			if (leftElement == null)
-				leftElement = ""; //$NON-NLS-1$
-			if (ancestorElement == null)
-				ancestorElement = ""; //$NON-NLS-1$
-
-		} catch (FactoryException e) {
-			MessageDialog.openError(getShell(), ERROR_DIALOG_TITLE, e.getMessage());
+		if (rightElement == null) {
+			rightElement = ""; //$NON-NLS-1$
+		}
+		if (leftElement == null) {
+			leftElement = ""; //$NON-NLS-1$
+		}
+		if (ancestorElement == null) {
+			ancestorElement = ""; //$NON-NLS-1$
 		}
 
 		// TODO To get the IResource or IFile from oRightElement, oLeftElement and oAncestorElement to know if
 		// it is editable or not.
+	}
+
+	private static String eGetAsString(EObject oRightElement, String name) {
+		EStructuralFeature feat = oRightElement.eClass().getEStructuralFeature(name);
+		if (feat != null) {
+			Object value = oRightElement.eGet(feat);
+			if (value != null) {
+				return value.toString();
+			}
+		}
+		return null;
+	}
+
+	private static void eSet(EObject obj, String name, String value) {
+		EStructuralFeature feat = obj.eClass().getEStructuralFeature(name);
+		if (feat != null) {
+			obj.eSet(feat, value);
+		}
 	}
 
 	/**
@@ -334,10 +347,10 @@ public class CompareTextDialog extends TrayDialog {
 	 */
 	@Override
 	protected void createButtonsForButtonBar(Composite parent) {
-		createButton(parent, IDialogConstants.OK_ID,
-				EMFCompareUIMessages.getString("CompareTextDialog_labelOK"), true); //$NON-NLS-1$
-		createButton(parent, IDialogConstants.CANCEL_ID,
-				EMFCompareUIMessages.getString("CompareTextDialog_labelCancel"), true); //$NON-NLS-1$
+		createButton(parent, IDialogConstants.OK_ID, EMFCompareUIMessages
+				.getString("CompareTextDialog_labelOK"), true); //$NON-NLS-1$
+		createButton(parent, IDialogConstants.CANCEL_ID, EMFCompareUIMessages
+				.getString("CompareTextDialog_labelCancel"), true); //$NON-NLS-1$
 	}
 
 	/**
@@ -436,7 +449,7 @@ public class CompareTextDialog extends TrayDialog {
 	 * @param updateAttribute
 	 *            The {@link UpdateAttribute} that will serve as input of our viewer.
 	 */
-	public void setInput(UpdateAttribute updateAttribute) {
+	public void setInput(AttributeChange updateAttribute) {
 		setChangeCompare(updateAttribute);
 		setCompareViewerInput();
 	}
@@ -489,12 +502,10 @@ public class CompareTextDialog extends TrayDialog {
 		 */
 		@Override
 		public void saveLeftContent(Object element, byte[] bytes) {
-			final EObject obj = changeCompare.getLeftElement();
+			final EObject obj = changeCompare.getMatch().getLeft();
 			try {
-				EFactory.eSet(obj, attribute.getName(), new String(bytes));
+				eSet(obj, attribute.getName(), new String(bytes));
 				obj.eResource().save(Collections.EMPTY_MAP);
-			} catch (FactoryException e) {
-				MessageDialog.openError(getShell(), ERROR_DIALOG_TITLE, e.getMessage());
 			} catch (IOException e) {
 				MessageDialog.openError(getShell(), ERROR_DIALOG_TITLE, e.getMessage());
 			}
@@ -509,12 +520,10 @@ public class CompareTextDialog extends TrayDialog {
 		 */
 		@Override
 		public void saveRightContent(Object element, byte[] bytes) {
-			final EObject obj = changeCompare.getLeftElement();
+			final EObject obj = changeCompare.getMatch().getRight();
 			try {
-				EFactory.eSet(obj, attribute.getName(), new String(bytes));
+				eSet(obj, attribute.getName(), new String(bytes));
 				obj.eResource().save(Collections.EMPTY_MAP);
-			} catch (FactoryException e) {
-				MessageDialog.openError(getShell(), ERROR_DIALOG_TITLE, e.getMessage());
 			} catch (IOException e) {
 				MessageDialog.openError(getShell(), ERROR_DIALOG_TITLE, e.getMessage());
 			}

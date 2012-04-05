@@ -11,7 +11,9 @@
 package org.eclipse.emf.compare.ui;
 
 import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.emf.compare.ui.viewer.filter.DifferenceFilterExtensionRegistryListener;
 import org.eclipse.emf.compare.ui.viewer.filter.DifferenceFilterRegistry;
 import org.eclipse.emf.compare.ui.viewer.group.DifferenceGroupExtensionRegistryListener;
@@ -119,5 +121,10 @@ public class EMFCompareUIPlugin extends AbstractUIPlugin {
 			section = dialogSettings.addNewSection(name);
 		}
 		return section;
+	}
+
+	public static void log(Throwable e, boolean b) {
+		final Status stat = new Status(IStatus.ERROR, PLUGIN_ID, "Error comparing models", e);
+		getDefault().getLog().log(stat);
 	}
 }

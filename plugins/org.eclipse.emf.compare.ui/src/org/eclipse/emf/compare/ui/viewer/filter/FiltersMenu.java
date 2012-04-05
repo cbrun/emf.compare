@@ -16,9 +16,9 @@ import java.util.List;
 
 import org.eclipse.emf.compare.ui.EMFCompareUIMessages;
 import org.eclipse.emf.compare.ui.EMFCompareUIPlugin;
+import org.eclipse.emf.compare.ui.util.EMFCompareConstants;
 import org.eclipse.emf.compare.ui.viewer.AbstractOrderingMenu;
 import org.eclipse.emf.compare.ui.viewer.structure.ParameterizedStructureMergeViewer;
-import org.eclipse.emf.compare.util.EMFComparePreferenceConstants;
 import org.eclipse.jface.action.IAction;
 
 /**
@@ -69,8 +69,8 @@ public class FiltersMenu extends AbstractOrderingMenu {
 		while (descriptors.hasNext()) {
 			final DifferenceFilterDescriptor desc = descriptors.next();
 
-			final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore()
-					.getString(EMFComparePreferenceConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
+			final String preferenceValue = EMFCompareUIPlugin.getDefault().getPreferenceStore().getString(
+					EMFCompareConstants.PREFERENCES_KEY_DEFAULT_FILTERS);
 
 			final List<DifferenceFilterDescriptor> defaultDescriptors = DifferenceFilterRegistry.INSTANCE
 					.getDescriptors(preferenceValue);

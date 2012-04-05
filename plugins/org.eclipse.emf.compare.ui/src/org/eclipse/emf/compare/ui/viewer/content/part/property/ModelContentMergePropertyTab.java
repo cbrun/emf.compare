@@ -10,18 +10,20 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.viewer.content.part.property;
 
+import com.google.common.collect.Maps;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.compare.structuremergeviewer.DiffElement;
 import org.eclipse.emf.common.notify.AdapterFactory;
-import org.eclipse.emf.compare.diff.metamodel.AttributeChange;
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
-import org.eclipse.emf.compare.diff.metamodel.ReferenceChange;
-import org.eclipse.emf.compare.match.metamodel.Match2Elements;
-import org.eclipse.emf.compare.match.metamodel.Side;
-import org.eclipse.emf.compare.match.metamodel.UnmatchElement;
+import org.eclipse.emf.compare.AttributeChange;
+import org.eclipse.emf.compare.Diff;
+import org.eclipse.emf.compare.Match;
+import org.eclipse.emf.compare.ReferenceChange;
+import org.eclipse.emf.compare.ui.AdapterUtils;
 import org.eclipse.emf.compare.ui.EMFCompareUIMessages;
 import org.eclipse.emf.compare.ui.util.EMFCompareConstants;
 import org.eclipse.emf.compare.ui.util.EMFCompareEObjectUtils;
@@ -29,8 +31,6 @@ import org.eclipse.emf.compare.ui.viewer.content.ModelContentMergeViewer;
 import org.eclipse.emf.compare.ui.viewer.content.part.IModelContentMergeViewerTab;
 import org.eclipse.emf.compare.ui.viewer.content.part.ModelContentMergeTabFolder;
 import org.eclipse.emf.compare.ui.viewer.content.part.ModelContentMergeTabItem;
-import org.eclipse.emf.compare.util.AdapterUtils;
-import org.eclipse.emf.compare.util.EMFCompareMap;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.util.EcoreUtil;
 import org.eclipse.emf.edit.ui.provider.AdapterFactoryLabelProvider;
@@ -63,13 +63,13 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	protected final int partSide;
 
 	/** Maps a TreeItem to its data. The key used is the URI of the data. */
-	private final Map<String, ModelContentMergeTabItem> dataToItem = new EMFCompareMap<String, ModelContentMergeTabItem>();
+	private final Map<String, ModelContentMergeTabItem> dataToItem = Maps.newHashMap();
 
 	/**
 	 * Keeps a reference to all the differences detected by the comparison. This list will be cleared as soon
 	 * as {@link #dataToItem} will be populated.
 	 */
-	private final List<DiffElement> differences = new ArrayList<DiffElement>();
+	private final List<Diff> differences = new ArrayList<Diff>();
 
 	/** Keeps a reference to the containing tab folder. */
 	private final ModelContentMergeTabFolder parent;
@@ -134,17 +134,19 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	 * @return The widget representing the given {@link DiffElement}.
 	 * @see org.eclipse.jface.viewers.StructuredViewer#findItem(Object)
 	 */
-	public TableItem find(DiffElement diff) {
+	public TableItem find(Diff diff) {
 		final EObject inputEObject = ((PropertyContentProvider)getContentProvider()).getInputEObject();
 		TableItem item = null;
 		if (diff instanceof AttributeChange) {
 			final AttributeChange theDiff = (AttributeChange)diff;
-			if (theDiff.getLeftElement() == inputEObject || theDiff.getRightElement() == inputEObject)
+			if (theDiff.getMatch().getLeft() == inputEObject || theDiff.getMatch().getRight() == inputEObject) {
 				item = (TableItem)findItem(theDiff.getAttribute());
+			}
 		} else if (diff instanceof ReferenceChange) {
 			final ReferenceChange theDiff = (ReferenceChange)diff;
-			if (theDiff.getLeftElement() == inputEObject || theDiff.getRightElement() == inputEObject)
+			if (theDiff.getMatch().getLeft() == inputEObject || theDiff.getMatch().getRight() == inputEObject) {
 				item = (TableItem)findItem(theDiff.getReference());
+			}
 		}
 		return item;
 	}
@@ -161,8 +163,9 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 			final List<?> list = getSelectionFromWidget();
 			for (Object o : list) {
 				final Widget w = findItem(o);
-				if (w instanceof TableItem)
+				if (w instanceof TableItem) {
 					result.add((TableItem)w);
+				}
 			}
 		}
 		return result;
@@ -184,8 +187,9 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	 */
 	public int getTotalColumnsWidth() {
 		int width = 0;
-		for (final TableColumn col : getTable().getColumns())
+		for (final TableColumn col : getTable().getColumns()) {
 			width += col.getWidth();
+		}
 		return width;
 	}
 
@@ -195,23 +199,35 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	 * @see org.eclipse.emf.compare.ui.viewer.content.part.IModelContentMergeViewerTab#getUIItem(org.eclipse.emf.ecore.EObject)
 	 */
 	public ModelContentMergeTabItem getUIItem(EObject data) {
-		final EObject element;
-		if (getInput() instanceof UnmatchElement)
-			element = ((UnmatchElement)getInput()).getElement();
-		else if (partSide == EMFCompareConstants.LEFT)
-			element = ((Match2Elements)getInput()).getLeftElement();
-		else
-			element = ((Match2Elements)getInput()).getRightElement();
+		EObject element = getElement();
 
-		String key = EcoreUtil.getURI(element).fragment();
-		final String[] fragments = EcoreUtil.getURI(data).fragment().split("/"); //$NON-NLS-1$
-		if (fragments.length > 0)
-			key += '/' + fragments[fragments.length - 1];
-		final ModelContentMergeTabItem item = dataToItem.get(key);
-		if (item != null) {
-			computeUIInfoFor(item);
+		if (element != null) {
+			String key = EcoreUtil.getURI(element).fragment();
+			final String[] fragments = EcoreUtil.getURI(data).fragment().split("/"); //$NON-NLS-1$
+			if (fragments.length > 0) {
+				key += '/' + fragments[fragments.length - 1];
+			}
+			final ModelContentMergeTabItem item = dataToItem.get(key);
+			if (item != null) {
+				computeUIInfoFor(item);
+			}
+			return item;
 		}
-		return item;
+		return null;
+	}
+
+	protected EObject getElement() {
+		EObject element = null;
+		if (getInput() instanceof Match) {
+			Match m = (Match)getInput();
+			element = m.getLeft();
+			if (partSide == EMFCompareConstants.LEFT) {
+				element = m.getLeft();
+			} else {
+				element = m.getRight();
+			}
+		}
+		return element;
 	}
 
 	/**
@@ -224,26 +240,24 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	 * @return List of this tab's elements.
 	 */
 	public List<ModelContentMergeTabItem> getVisibleElements() {
-		if (dataToItem.size() > 0 && dataToItem.values().iterator().next().getActualItem().isDisposed())
+		if (dataToItem.size() > 0 && dataToItem.values().iterator().next().getActualItem().isDisposed()) {
 			mapTableItems();
+		}
 
 		final List<ModelContentMergeTabItem> result = new ArrayList<ModelContentMergeTabItem>();
 		for (String data : dataToItem.keySet()) {
-			final EObject element;
-			if (getInput() instanceof UnmatchElement)
-				element = ((UnmatchElement)getInput()).getElement();
-			else if (partSide == EMFCompareConstants.LEFT)
-				element = ((Match2Elements)getInput()).getLeftElement();
-			else
-				element = ((Match2Elements)getInput()).getRightElement();
-			if (data.startsWith(EcoreUtil.getURI(element).fragment())) {
-				final ModelContentMergeTabItem next = dataToItem.get(data);
-				final TableItem nextTableItem = (TableItem)next.getActualItem();
-				if (nextTableItem.getBounds().y >= getTable().getClientArea().y
-						&& nextTableItem.getBounds().y <= getTable().getClientArea().y
-								+ getTable().getClientArea().height) {
-					computeUIInfoFor(next);
-					result.add(next);
+			final EObject element = getElement();
+
+			if (element != null) {
+				if (data.startsWith(EcoreUtil.getURI(element).fragment())) {
+					final ModelContentMergeTabItem next = dataToItem.get(data);
+					final TableItem nextTableItem = (TableItem)next.getActualItem();
+					if (nextTableItem.getBounds().y >= getTable().getClientArea().y
+							&& nextTableItem.getBounds().y <= getTable().getClientArea().y
+									+ getTable().getClientArea().height) {
+						computeUIInfoFor(next);
+						result.add(next);
+					}
 				}
 			}
 		}
@@ -306,17 +320,9 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	 * @see org.eclipse.emf.compare.ui.viewer.content.part.IModelContentMergeViewerTab#setReflectiveInput(org.eclipse.emf.ecore.EObject)
 	 */
 	public void setReflectiveInput(Object input) {
-		if (input instanceof Match2Elements) {
+		if (input instanceof Match && ((Match)input).getLeft() != null && ((Match)input).getRight() != null) {
 			setInput(input);
-		} else if (input instanceof UnmatchElement) {
-			// 352979 : We no longer display "unmatched element" properties, plus we have a potential NPE if
-			// an unmatched is selected _first_
-			final Side inputSide = ((UnmatchElement)input).getSide();
-			if (sidesMatch(inputSide, getSide())) {
-				setInput(input);
-			} else {
-				setInput(getInput());
-			}
+
 		} else {
 			// forces refresh
 			setInput(getInput());
@@ -326,33 +332,12 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	}
 
 	/**
-	 * This will check whether the two given "sides" constants match.
-	 * 
-	 * @param matchSide
-	 *            Side from the match engines.
-	 * @param partSide
-	 *            Side as understood by the UI.
-	 * @return <code>true</code> if the two given sides match, <code>false</code> otherwise.
-	 */
-	private static boolean sidesMatch(Side matchSide, int partSide) {
-		boolean match = false;
-		if (matchSide == Side.LEFT) {
-			match = partSide == EMFCompareConstants.LEFT;
-		} else if (matchSide == Side.RIGHT) {
-			match = partSide == EMFCompareConstants.RIGHT;
-		} else {
-			match = partSide == EMFCompareConstants.ANCESTOR;
-		}
-		return match;
-	}
-
-	/**
 	 * Ensures that the given diff is visible in the table.
 	 * 
 	 * @param diff
 	 *            {@link DiffElement} to make visible.
 	 */
-	public void showItem(DiffElement diff) {
+	public void showItem(Diff diff) {
 		final TableItem elementItem = find(diff);
 		if (elementItem != null) {
 			getTable().setSelection(elementItem);
@@ -364,9 +349,10 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	 * 
 	 * @see org.eclipse.emf.compare.ui.viewer.content.part.IModelContentMergeViewerTab#showItems(java.util.List)
 	 */
-	public void showItems(List<DiffElement> items) {
-		if (items.size() > 0)
+	public void showItems(List<Diff> items) {
+		if (items.size() > 0) {
 			showItem(items.get(0));
+		}
 	}
 
 	/**
@@ -412,9 +398,9 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	 */
 	private void mapDifferences() {
 		differences.clear();
-		final Iterator<DiffElement> diffIterator = parent.getDiffAsList().iterator();
+		final Iterator<Diff> diffIterator = parent.getDiffAsList().iterator();
 		while (diffIterator.hasNext()) {
-			final DiffElement diff = diffIterator.next();
+			final Diff diff = diffIterator.next();
 			if (diff instanceof ReferenceChange || diff instanceof AttributeChange) {
 				differences.add(diff);
 			}
@@ -429,13 +415,14 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 	private void mapTableItems() {
 		dataToItem.clear();
 		for (int i = 0; i < differences.size(); i++) {
-			final DiffElement diff = differences.get(i);
+			final Diff diff = differences.get(i);
 			// Defines the TableItem corresponding to this difference
 			final EObject data;
-			if (diff instanceof ReferenceChange)
+			if (diff instanceof ReferenceChange) {
 				data = ((ReferenceChange)diff).getReference();
-			else
+			} else {
 				data = ((AttributeChange)diff).getAttribute();
+			}
 			final TableItem item = (TableItem)findItem(data);
 
 			if (item != null) {
@@ -444,10 +431,11 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 
 				final ModelContentMergeTabItem wrappedItem = new ModelContentMergeTabItem(diff, item, color);
 				String key = ""; //$NON-NLS-1$
-				if (partSide == EMFCompareConstants.LEFT)
+				if (partSide == EMFCompareConstants.LEFT) {
 					key = EcoreUtil.getURI(EMFCompareEObjectUtils.getLeftElement(diff)).fragment();
-				else if (partSide == EMFCompareConstants.RIGHT)
+				} else if (partSide == EMFCompareConstants.RIGHT) {
 					key = EcoreUtil.getURI(EMFCompareEObjectUtils.getRightElement(diff)).fragment();
+				}
 				final String[] fragments = EcoreUtil.getURI(data).fragment().split("/"); //$NON-NLS-1$
 				key += '/' + fragments[fragments.length - 1];
 				dataToItem.put(key, wrappedItem);
@@ -493,9 +481,10 @@ public final class ModelContentMergePropertyTab extends TableViewer implements I
 			event.gc.setLineWidth(2);
 			event.gc.setForeground(new Color(item.getActualItem().getDisplay(), ModelContentMergeViewer
 					.getColor(item.getCurveColor())));
-			if (partSide == EMFCompareConstants.LEFT)
-				event.gc.drawLine(getTotalColumnsWidth(), item.getCurveY(), tableBounds.width,
-						item.getCurveY());
+			if (partSide == EMFCompareConstants.LEFT) {
+				event.gc.drawLine(getTotalColumnsWidth(), item.getCurveY(), tableBounds.width, item
+						.getCurveY());
+			}
 		}
 	}
 

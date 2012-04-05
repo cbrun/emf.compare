@@ -89,6 +89,8 @@ Contributors:
          </enablement>
       </changePreviewViewer>
    </extension>
+   <!--
+   It should not be required anymore.
    <extension
          point="org.eclipse.emf.compare.ui.team.handler">
       <handler
@@ -96,6 +98,7 @@ Contributors:
             id="org.eclipse.emf.compare.ui.internal.HistoryComparisonHandler">
       </handler>
    </extension>
+   -->
    <extension
          point="org.eclipse.emf.compare.ui.diff.group">
       <groupingFacility
@@ -124,6 +127,7 @@ Contributors:
          </group>
       </groupingFacility>
    </extension>
+   <!-- TODO adapt implementation with new APIS
    <extension
          point="org.eclipse.emf.compare.ui.diff.group">
       <groupingFacility
@@ -132,6 +136,7 @@ Contributors:
             name="Per metamodel element">
       </groupingFacility>
    </extension>
+   -->
    <extension
          point="org.eclipse.emf.compare.ui.diff.filter">
       <filter

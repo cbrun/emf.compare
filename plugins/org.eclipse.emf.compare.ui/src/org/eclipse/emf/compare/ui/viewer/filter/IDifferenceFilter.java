@@ -10,7 +10,8 @@
  *******************************************************************************/
 package org.eclipse.emf.compare.ui.viewer.filter;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.compare.structuremergeviewer.DiffElement;
+import org.eclipse.emf.compare.Diff;
 
 /**
  * Interface for EMF Compare's difference filters.
@@ -26,5 +27,5 @@ public interface IDifferenceFilter {
 	 *            the element to test.
 	 * @return true if the given element has to be hidden, false otherwise.
 	 */
-	boolean hides(DiffElement element);
+	boolean hides(Diff element);
 }

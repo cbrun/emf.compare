@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.emf.compare.diff.metamodel.DiffElement;
+import org.eclipse.emf.compare.Diff;
 
 /**
  * A facility to group difference elements per kind of changes.
@@ -51,13 +51,13 @@ public class ChangesKindGrouping implements IDifferenceGroupingFacility {
 	 * 
 	 * @see org.eclipse.emf.compare.ui.viewer.group.IDifferenceGroupingFacility#belongsTo(org.eclipse.emf.compare.diff.metamodel.DiffElement)
 	 */
-	public UIDifferenceGroup belongsTo(DiffElement d) {
+	public UIDifferenceGroup belongsTo(Diff d) {
 		final UIDifferenceGroup diffGroup;
 		switch (d.getKind()) {
-			case ADDITION:
+			case ADD:
 				diffGroup = getFromId("additions"); //$NON-NLS-1$
 				break;
-			case DELETION:
+			case DELETE:
 				diffGroup = getFromId("removes"); //$NON-NLS-1$
 				break;
 			default:
